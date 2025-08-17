@@ -1,1 +1,158 @@
-[]
+[
+  {
+    "chat": "{\"message\":\"무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.351799147962026,\"longitude\":127.30049893088562,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755408448955}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.35179675293872,\"longitude\":127.30047541674041,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755408463342}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을 할 수 있지?\",\"location\":{\"latitude\":36.351795925044264,\"longitude\":127.30046728881878,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755408599393}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.35185431678363,\"longitude\":127.30047225481587,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755408648334}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너는 무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.35189448086718,\"longitude\":127.30077576403171,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409115436}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너는 무엇을할 수 있지 ?\",\"location\":{\"latitude\":36.35161976518854,\"longitude\":127.30030052856537,\"accuracy\":37.333333333333336,\"isDefault\":false},\"timestamp\":1755409134935}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.35181389183676,\"longitude\":127.30055756765648,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409321122}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.35181389183676,\"longitude\":127.30055756765648,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409474393}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을할 수 있지 ?\",\"location\":{\"latitude\":36.351789687159915,\"longitude\":127.30050974705192,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409737517}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.351789687159915,\"longitude\":127.30050974705192,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409757737}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.351789686323556,\"longitude\":127.3005097447378,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409814996}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\" 포만감 정보 알려줘\",\"location\":{\"latitude\":36.351789686323556,\"longitude\":127.3005097447378,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755409888664}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35181044666058,\"longitude\":127.30043027119132,\"accuracy\":44,\"isDefault\":false},\"timestamp\":1755410356106}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35177945843125,\"longitude\":127.30059036844094,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755410396835}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.3517770037857,\"longitude\":127.30056609171208,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755410699292}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너는 무엇을 할 수 있어 ?\",\"location\":{\"latitude\":36.351619724792016,\"longitude\":127.3003005901027,\"accuracy\":37.333333333333336,\"isDefault\":false},\"timestamp\":1755410842682}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너는 무엇을 할 수 있어 ?\",\"location\":{\"latitude\":36.351815876662215,\"longitude\":127.3005014306214,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755410862733}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너는 무엇을 할 수 있지 ?\",\"location\":{\"latitude\":36.35180779431961,\"longitude\":127.3004811607968,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755411038839}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"무엇을할 수 있지 ?\",\"location\":{\"latitude\":36.35169601321084,\"longitude\":127.30034637226092,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755411534061}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35169601321084,\"longitude\":127.30034637226092,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755411541665}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"3\",\"location\":{\"latitude\":36.35169601321084,\"longitude\":127.30034637226092,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755411549542}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35169601321084,\"longitude\":127.30034637226092,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755411585481}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘./\",\"location\":{\"latitude\":36.35177228990382,\"longitude\":127.30039214354838,\"accuracy\":69.33333333333333,\"isDefault\":false},\"timestamp\":1755411809634}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"3\",\"location\":{\"latitude\":36.35177228990382,\"longitude\":127.30039214354838,\"accuracy\":69.33333333333333,\"isDefault\":false},\"timestamp\":1755411817550}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"위도: 36.351772, 경도: 127.300392\",\"location\":{\"latitude\":36.35177228990382,\"longitude\":127.30039214354838,\"accuracy\":69.33333333333333,\"isDefault\":false},\"timestamp\":1755411857064}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.351791367751154,\"longitude\":127.30041114941884,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755412299319}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"맛집 추천해줘\",\"location\":{\"latitude\":36.351792940622,\"longitude\":127.30053660722233,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755413117818}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"한식\",\"location\":{\"latitude\":36.351792940622,\"longitude\":127.30053660722233,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755413125813}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35178513417373,\"longitude\":127.30047896505907,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755414527981}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35173873899821,\"longitude\":127.30061234883293,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755414787730}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35181807378077,\"longitude\":127.30071257606454,\"accuracy\":48,\"isDefault\":false},\"timestamp\":1755414933029}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.351733042574985,\"longitude\":127.3005069887548,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755415064452}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.351818061385345,\"longitude\":127.30071253581849,\"accuracy\":48,\"isDefault\":false},\"timestamp\":1755415154466}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘.\",\"location\":{\"latitude\":36.35181046414346,\"longitude\":127.30043029751752,\"accuracy\":44,\"isDefault\":false},\"timestamp\":1755415446577}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"맛집 추천해줘\",\"location\":{\"latitude\":36.351747504711334,\"longitude\":127.30035400720243,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755415784427}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.351747505022786,\"longitude\":127.30035399924333,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755415837298}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.351722737297344,\"longitude\":127.30031589464963,\"accuracy\":44.666666666666664,\"isDefault\":false},\"timestamp\":1755415911219}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.35174607981183,\"longitude\":127.30041982748644,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755416240793}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"한식\",\"location\":{\"latitude\":36.35174607981183,\"longitude\":127.30041982748644,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755416251215}",
+    "day": "Sunday"
+  }
+]

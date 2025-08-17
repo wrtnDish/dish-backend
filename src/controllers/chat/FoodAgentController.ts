@@ -7,11 +7,11 @@ import { FoodService } from "../../services/FoodService";
 import { MessageAnalyzer } from "../../utils/MessageAnalyzer";
 
 /**
- * AI 에이전트가 사용할 수 있는 음식 추천 기능 컨트롤러
+ * 기본 음식 추천 컨트롤러 (사용 비권장 - 통합 시스템 우선 사용)
  * 
  * @description
- * 이 클래스는 Agentica AI 에이전트가 LLM Function Calling을 통해
- * 음식 추천 관련 기능을 사용할 수 있도록 제공하는 컨트롤러입니다.
+ * 이 컨트롤러는 포만감만을 고려한 기본적인 음식 추천 기능을 제공합니다.
+ * 일반적인 음식 추천에는 IntegratedFoodAgentController의 통합 시스템을 우선 사용하세요.
  * 
  * **주요 기능:**
  * - 사용자 메시지 분석 (음식 추천/맛집 검색 의도 파악)
@@ -29,12 +29,12 @@ import { MessageAnalyzer } from "../../utils/MessageAnalyzer";
  * 3. AI: shouldAskForFullness가 true이면 askForFullness() 호출
  * 4. 사용자: 포만감 응답 (1-3)
  * 5. AI: recommendFoodByFullness() 호출하여 추천 제공
- * 
+ *
  * **사용 플로우 (포만감 정보 포함):**
  * 1. 사용자: "배고파서 음식 추천해줘" (포만감 정보 포함)
  * 2. AI: analyzeUserMessage()로 메시지 분석
  * 3. AI: 포만감 추출 후 바로 recommendFoodByFullness() 호출
- * 
+ *
  * @example
  * ```typescript
  * // 포만감 정보 없는 경우
@@ -43,8 +43,8 @@ import { MessageAnalyzer } from "../../utils/MessageAnalyzer";
  *   const question = askForFullness();
  *   // AI가 사용자에게 포만감을 물어봄
  * }
- * 
- * // 포만감 정보 있는 경우  
+ *
+ * // 포만감 정보 있는 경우
  * const analysis = analyzeUserMessage({ userMessage: "배고파서 뭐 먹을까" });
  * if (analysis.hasFullnessInfo) {
  *   const recommendation = await recommendFoodByFullness({
@@ -66,15 +66,15 @@ export class FoodAgentController {
 
   /**
    * 사용자 메시지 분석 및 포만감 질문 필요성 판단
-   * 
+   *
    * @description
    * 사용자의 메시지를 분석하여 음식 추천이나 맛집 검색 의도를 파악하고,
    * 포만감 정보가 없는 경우 포만감 질문이 필요한지 판단합니다.
-   * 
+   *
    * @param request - 분석 요청 정보
    * @param request.userMessage - 분석할 사용자 메시지
    * @returns 메시지 분석 결과 및 포만감 질문 필요성
-   * 
+   *
    * @example
    * ```typescript
    * // 사용자: "음식 추천해줘"
@@ -119,9 +119,9 @@ export class FoodAgentController {
     recommendedAction: string;
   } {
     const analysis = MessageAnalyzer.analyzeMessage(request.userMessage);
-    
+
     let recommendedAction = "";
-    
+
     if (analysis.shouldAskForFullness) {
       recommendedAction = "askForFullness() 함수를 호출하여 포만감을 질문하세요.";
     } else if (analysis.hasFullnessInfo) {
@@ -146,13 +146,6 @@ export class FoodAgentController {
    * 이 함수는 포만감 레벨을 질문하는 메시지와 선택지를 반환합니다.
    * 
    * @returns 포만감 질문 메시지와 선택지
-   * 
-   * @example
-   * ```typescript
-   * // 사용자: "식당 추천해줘"
-   * const question = await askForFullness();
-   * // AI가 반환받은 메시지로 사용자에게 포만감을 질문
-   * ```
    */
   public askForFullness(): {
     /**
