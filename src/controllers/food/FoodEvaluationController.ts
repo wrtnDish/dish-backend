@@ -1,9 +1,23 @@
 import { Controller } from "@nestjs/common";
 import { TypedBody, TypedRoute } from "@nestia/core";
-import { IFoodEvaluationRequest, IFoodEvaluationResponse, IFoodCategory } from "../../api/structures/food/IFoodCategory";
+import { IFoodEvaluationRequest, IFoodEvaluationResponse } from "../../api/structures/food/IFoodCategory";
 import { ILatLng } from "../../api/structures/weather/IWeatherForecast";
 import { FoodEvaluationService } from "../../services/FoodEvaluationService";
 import { FOOD_CATEGORIES } from "../../data/foodCategories";
+
+// 음식 카테고리 타입을 inline으로 정의
+export interface IFoodCategory {
+  /** 카테고리 고유 ID */
+  id: number;
+  /** 카테고리 영문명 */
+  name: string;
+  /** 카테고리 한글명 */
+  nameKo: string;
+  /** 음식 제공 온도 */
+  serveTemp: "hot" | "warm" | "cold" | "warm & cold";
+  /** 카테고리 설명 */
+  description?: string;
+}
 
 /**
  * 음식 평가 컨트롤러

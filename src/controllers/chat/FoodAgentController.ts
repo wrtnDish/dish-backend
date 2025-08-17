@@ -7,11 +7,14 @@ import { FoodService } from "../../services/FoodService";
 import { MessageAnalyzer } from "../../utils/MessageAnalyzer";
 
 /**
- * 기본 음식 추천 컨트롤러 (사용 비권장 - 통합 시스템 우선 사용)
+ * 기본 음식 추천 컨트롤러 (비활성화됨)
+ * 
+ * @deprecated 이 컨트롤러는 더 이상 사용하지 않습니다.
+ * IntegratedFoodAgentController의 askForFoodRecommendation()을 사용하세요.
  * 
  * @description
- * 이 컨트롤러는 포만감만을 고려한 기본적인 음식 추천 기능을 제공합니다.
- * 일반적인 음식 추천에는 IntegratedFoodAgentController의 통합 시스템을 우선 사용하세요.
+ * ⚠️ 이 컨트롤러는 중복 응답 문제로 인해 비활성화되었습니다.
+ * 모든 음식 추천 기능은 IntegratedFoodAgentController로 통합되었습니다.
  * 
  * **주요 기능:**
  * - 사용자 메시지 분석 (음식 추천/맛집 검색 의도 파악)
@@ -82,7 +85,11 @@ export class FoodAgentController {
    * // analysis.shouldAskForFullness === true
    * ```
    */
-  public analyzeUserMessage(request: {
+  /**
+   * @deprecated 이 메소드는 더 이상 사용하지 않습니다. IntegratedFoodAgentController.askForFoodRecommendation()을 사용하세요.
+   * @hidden
+   */
+  private analyzeUserMessage(request: {
     /**
      * 분석할 사용자 메시지
      */
@@ -147,7 +154,11 @@ export class FoodAgentController {
    * 
    * @returns 포만감 질문 메시지와 선택지
    */
-  public askForFullness(): {
+  /**
+   * @deprecated 이 메소드는 더 이상 사용하지 않습니다. IntegratedFoodAgentController.askForFoodRecommendation()을 사용하세요.
+   * @hidden
+   */
+  private askForFullness(): {
     /**
      * 질문 메시지
      */
@@ -219,7 +230,11 @@ export class FoodAgentController {
    * // result.message: "지금은 드시지 않는 것이 좋겠습니다..."
    * ```
    */
-  public async recommendFoodByFullness(request: {
+  /**
+   * @deprecated 이 메소드는 더 이상 사용하지 않습니다. IntegratedFoodAgentController.getSmartFoodRecommendation()을 사용하세요.
+   * @hidden
+   */
+  private async recommendFoodByFullness(request: {
     /**
      * 포만감 레벨 (1-3)
      * @description 3: 매우 배고픔, 2: 보통, 1: 배부름

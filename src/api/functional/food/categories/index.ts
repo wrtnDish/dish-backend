@@ -7,7 +7,8 @@
 import type { IConnection } from "@nestia/fetcher";
 import { PlainFetcher } from "@nestia/fetcher/lib/PlainFetcher";
 import typia from "typia";
-import { IFoodCategory } from "../../../structures/food/IFoodCategory";
+
+import type { IFoodCategory } from "../../../structures/food/IFoodCategory";
 
 /**
  * 음식 카테고리 목록 조회

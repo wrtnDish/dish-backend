@@ -3,6 +3,7 @@ import { IFoodCategory } from "../api/structures/food/IFoodCategory";
 /**
  * 음식 카테고리 마스터 데이터
  * @description 날씨 기반 음식 추천을 위한 기본 카테고리 정보
+ * 요구사항에 따른 22개 음식 카테고리
  */
 export const FOOD_CATEGORIES: IFoodCategory[] = [
   {
@@ -14,115 +15,115 @@ export const FOOD_CATEGORIES: IFoodCategory[] = [
   },
   {
     id: 2,
-    name: "chicken",
-    nameKo: "치킨",
-    serveTemp: "hot",
-    description: "튀기거나 구운 닭요리"
-  },
-  {
-    id: 3,
-    name: "hamburger",
-    nameKo: "햄버거",
-    serveTemp: "warm",
-    description: "패티와 야채가 든 샌드위치"
-  },
-  {
-    id: 4,
-    name: "chinese",
-    nameKo: "중식",
-    serveTemp: "hot",
-    description: "중국식 요리"
-  },
-  {
-    id: 5,
-    name: "korean",
-    nameKo: "한식",
-    serveTemp: "hot",
-    description: "한국 전통 요리"
-  },
-  {
-    id: 6,
-    name: "japanese",
-    nameKo: "일식",
-    serveTemp: "warm & cold",
-    description: "일본식 요리"
-  },
-  {
-    id: 7,
     name: "salad",
     nameKo: "샐러드",
     serveTemp: "cold",
     description: "신선한 야채와 드레싱"
   },
   {
-    id: 8,
-    name: "soup",
-    nameKo: "국물요리",
-    serveTemp: "hot",
-    description: "뜨거운 국물 요리"
-  },
-  {
-    id: 9,
-    name: "bbq",
-    nameKo: "구이",
-    serveTemp: "hot",
-    description: "고기나 해산물 구이"
-  },
-  {
-    id: 10,
-    name: "pasta",
-    nameKo: "파스타",
-    serveTemp: "warm",
-    description: "이탈리아 면 요리"
-  },
-  {
-    id: 11,
-    name: "seafood",
-    nameKo: "회/해물",
-    serveTemp: "cold",
-    description: "신선한 해산물 요리"
-  },
-  {
-    id: 12,
+    id: 3,
     name: "dessert",
     nameKo: "디저트",
     serveTemp: "cold",
     description: "달콤한 후식"
   },
   {
+    id: 4,
+    name: "western_food",
+    nameKo: "양식",
+    serveTemp: "warm",
+    description: "서양식 요리"
+  },
+  {
+    id: 5,
+    name: "korean_food",
+    nameKo: "한식",
+    serveTemp: "hot",
+    description: "한국 전통 요리"
+  },
+  {
+    id: 6,
+    name: "chicken",
+    nameKo: "치킨",
+    serveTemp: "hot",
+    description: "튀기거나 구운 닭요리"
+  },
+  {
+    id: 7,
+    name: "snack_food",
+    nameKo: "분식",
+    serveTemp: "hot",
+    description: "떡볶이, 순대, 튀김 등 분식류"
+  },
+  {
+    id: 8,
+    name: "pork_cutlet",
+    nameKo: "돈까스",
+    serveTemp: "hot",
+    description: "튀긴 돼지고기 커틀릿"
+  },
+  {
+    id: 9,
+    name: "pigs_trotters_boiled_pork",
+    nameKo: "족발/보쌈",
+    serveTemp: "warm",
+    description: "족발과 보쌈 요리"
+  },
+  {
+    id: 10,
+    name: "braised_stew",
+    nameKo: "찜/탕",
+    serveTemp: "hot",
+    description: "끓이거나 찐 요리"
+  },
+  {
+    id: 11,
+    name: "grilled",
+    nameKo: "구이",
+    serveTemp: "hot",
+    description: "고기나 해산물 구이"
+  },
+  {
+    id: 12,
+    name: "chinese_food",
+    nameKo: "중식",
+    serveTemp: "hot",
+    description: "중국식 요리"
+  },
+  {
     id: 13,
-    name: "cold_noodles",
-    nameKo: "냉면",
-    serveTemp: "cold",
-    description: "차가운 육수의 면 요리"
+    name: "japanese_food",
+    nameKo: "일식",
+    serveTemp: "warm & cold",
+    description: "일본식 요리"
   },
   {
     id: 14,
+    name: "sashimi_seafood",
+    nameKo: "회/해물",
+    serveTemp: "cold",
+    description: "신선한 해산물 요리"
+  },
+  {
+    id: 15,
     name: "coffee_tea",
     nameKo: "커피/차",
     serveTemp: "warm & cold",
     description: "따뜻하거나 차가운 음료"
   },
   {
-    id: 15,
-    name: "ice_cream",
-    nameKo: "빙수/아이스크림",
-    serveTemp: "cold",
-    description: "차가운 디저트"
-  },
-  {
     id: 16,
-    name: "hot_pot",
-    nameKo: "전골/찌개",
-    serveTemp: "hot",
-    description: "끓이는 뜨거운 요리"
+    name: "snacks",
+    nameKo: "간식",
+    serveTemp: "warm & cold",
+    description: "가벼운 간식류"
   },
   {
     id: 17,
-    name: "fried_food",
-    nameKo: "튀김요리",
+    name: "asian",
+    nameKo: "아시안",
     serveTemp: "hot",
-    description: "기름에 튀긴 요리"
+    description: "아시아 요리 전반"
   },
   {
     id: 18,
@@ -133,10 +134,10 @@ export const FOOD_CATEGORIES: IFoodCategory[] = [
   },
   {
     id: 19,
-    name: "smoothie",
-    nameKo: "스무디",
-    serveTemp: "cold",
-    description: "과일과 얼음을 갈아 만든 음료"
+    name: "burger",
+    nameKo: "버거",
+    serveTemp: "warm",
+    description: "햄버거류"
   },
   {
     id: 20,
@@ -144,6 +145,20 @@ export const FOOD_CATEGORIES: IFoodCategory[] = [
     nameKo: "멕시칸",
     serveTemp: "warm",
     description: "멕시코식 요리"
+  },
+  {
+    id: 21,
+    name: "lunch_box",
+    nameKo: "도시락",
+    serveTemp: "warm",
+    description: "포장된 식사"
+  },
+  {
+    id: 22,
+    name: "porridge",
+    nameKo: "죽",
+    serveTemp: "hot",
+    description: "곡물을 끓인 부드러운 요리"
   }
 ];
 

@@ -15,7 +15,6 @@ import { MyConfiguration } from "../../MyConfiguration";
 import { MyGlobal } from "../../MyGlobal";
 import { QuestionLogUtil } from "../../utils/QuestionLogUtil";
 import { WeatherAgentController } from "./WeatherAgentController";
-import { FoodAgentController } from "./FoodAgentController";
 import { IntegratedFoodAgentController } from "./IntegratedFoodAgentController";
 
 
@@ -70,20 +69,12 @@ export class MyChatController {
     // 날씨 기능을 제공하는 컨트롤러 인스턴스 생성
     const weatherController = new WeatherAgentController();
 
-    // 음식 추천 기능을 제공하는 컨트롤러 인스턴스 생성
-    const foodController = new FoodAgentController();
-    
     // 통합 음식 추천 기능을 제공하는 컨트롤러 인스턴스 생성
     const integratedFoodController = new IntegratedFoodAgentController();
 
     // Typia를 사용하여 각 컨트롤러의 LLM Application 스키마 생성
     const weatherApplication = typia.llm.application<
       WeatherAgentController,
-      "chatgpt"
-    >();
-
-    const foodApplication = typia.llm.application<
-      FoodAgentController,
       "chatgpt"
     >();
 
@@ -98,6 +89,7 @@ export class MyChatController {
       vendor: {
         api: new OpenAI({
           apiKey: MyGlobal.env.OPENAI_API_KEY,
+          baseURL: "https://openrouter.ai/api/v1",
         }),
         model: "gpt-4o-mini",
       },
@@ -112,14 +104,8 @@ export class MyChatController {
         {
           protocol: "class",
           name: "FoodRecommendationService",
-          application: foodApplication,
-          execute: foodController, // FoodAgentController 인스턴스를 실행자로 설정 (기본 포만감만)
-        },
-        {
-          protocol: "class",
-          name: "IntegratedFoodRecommendationService",
           application: integratedFoodApplication,
-          execute: integratedFoodController, // 통합 음식 추천 (날씨 + 포만감)
+          execute: integratedFoodController, // 통합 음식 추천 (날씨 + 포만감 + 히스토리)
         },
         {
           protocol: "http",
