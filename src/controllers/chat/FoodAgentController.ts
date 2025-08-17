@@ -4,6 +4,7 @@ import {
   FullnessLevel 
 } from "../../api/structures/food/IFoodRecommendation";
 import { FoodService } from "../../services/FoodService";
+import { MessageAnalyzer } from "../../utils/MessageAnalyzer";
 
 /**
  * AI 에이전트가 사용할 수 있는 음식 추천 기능 컨트롤러
@@ -12,29 +13,44 @@ import { FoodService } from "../../services/FoodService";
  * 이 클래스는 Agentica AI 에이전트가 LLM Function Calling을 통해
  * 음식 추천 관련 기능을 사용할 수 있도록 제공하는 컨트롤러입니다.
  * 
- * AI 모델이 사용자에게 포만감을 질문하고, 그 응답에 따라 적절한 음식을 추천합니다.
+ * **주요 기능:**
+ * - 사용자 메시지 분석 (음식 추천/맛집 검색 의도 파악)
+ * - 포만감 정보 누락 시 자동 질문 트리거
+ * - 포만감 기반 맞춤형 음식 추천
  * 
  * **포만감 레벨:**
  * - 3: 매우 배고픔
  * - 2: 보통
  * - 1: 배부름
  * 
- * **사용 플로우:**
- * 1. 사용자: "식당 추천해줘"
- * 2. AI: askForFullness() 호출하여 포만감 질문
- * 3. 사용자: 포만감 응답 (1-3)
- * 4. AI: recommendFoodByFullness() 호출하여 추천 제공
+ * **사용 플로우 (자동 포만감 질문):**
+ * 1. 사용자: "음식 추천해줘" (포만감 정보 없음)
+ * 2. AI: analyzeUserMessage()로 메시지 분석
+ * 3. AI: shouldAskForFullness가 true이면 askForFullness() 호출
+ * 4. 사용자: 포만감 응답 (1-3)
+ * 5. AI: recommendFoodByFullness() 호출하여 추천 제공
+ * 
+ * **사용 플로우 (포만감 정보 포함):**
+ * 1. 사용자: "배고파서 음식 추천해줘" (포만감 정보 포함)
+ * 2. AI: analyzeUserMessage()로 메시지 분석
+ * 3. AI: 포만감 추출 후 바로 recommendFoodByFullness() 호출
  * 
  * @example
  * ```typescript
- * // 사용자: "식당 추천해줘"
- * const question = await askForFullness();
- * // AI가 사용자에게 포만감을 물어봄
+ * // 포만감 정보 없는 경우
+ * const analysis = analyzeUserMessage({ userMessage: "식당 추천해줘" });
+ * if (analysis.shouldAskForFullness) {
+ *   const question = askForFullness();
+ *   // AI가 사용자에게 포만감을 물어봄
+ * }
  * 
- * // 사용자: "3" (매우 배고픔)
- * const recommendation = await recommendFoodByFullness({
- *   fullness: 3
- * });
+ * // 포만감 정보 있는 경우  
+ * const analysis = analyzeUserMessage({ userMessage: "배고파서 뭐 먹을까" });
+ * if (analysis.hasFullnessInfo) {
+ *   const recommendation = await recommendFoodByFullness({
+ *     fullness: 3  // 메시지에서 추출한 포만감
+ *   });
+ * }
  * ```
  */
 export class FoodAgentController {
@@ -46,6 +62,78 @@ export class FoodAgentController {
 
   constructor() {
     this.foodService = new FoodService();
+  }
+
+  /**
+   * 사용자 메시지 분석 및 포만감 질문 필요성 판단
+   * 
+   * @description
+   * 사용자의 메시지를 분석하여 음식 추천이나 맛집 검색 의도를 파악하고,
+   * 포만감 정보가 없는 경우 포만감 질문이 필요한지 판단합니다.
+   * 
+   * @param request - 분석 요청 정보
+   * @param request.userMessage - 분석할 사용자 메시지
+   * @returns 메시지 분석 결과 및 포만감 질문 필요성
+   * 
+   * @example
+   * ```typescript
+   * // 사용자: "음식 추천해줘"
+   * const analysis = analyzeUserMessage({ userMessage: "음식 추천해줘" });
+   * // analysis.shouldAskForFullness === true
+   * ```
+   */
+  public analyzeUserMessage(request: {
+    /**
+     * 분석할 사용자 메시지
+     */
+    userMessage: string;
+  }): {
+    /**
+     * 음식 추천 의도 감지 여부
+     */
+    isFoodRecommendation: boolean;
+
+    /**
+     * 맛집 검색 의도 감지 여부
+     */
+    isRestaurantSearch: boolean;
+
+    /**
+     * 포만감 정보 포함 여부
+     */
+    hasFullnessInfo: boolean;
+
+    /**
+     * 포만감 질문 필요 여부
+     */
+    shouldAskForFullness: boolean;
+
+    /**
+     * 분석 이유
+     */
+    analysisReason: string;
+
+    /**
+     * 다음 액션 권장사항
+     */
+    recommendedAction: string;
+  } {
+    const analysis = MessageAnalyzer.analyzeMessage(request.userMessage);
+    
+    let recommendedAction = "";
+    
+    if (analysis.shouldAskForFullness) {
+      recommendedAction = "askForFullness() 함수를 호출하여 포만감을 질문하세요.";
+    } else if (analysis.hasFullnessInfo) {
+      recommendedAction = "메시지에서 포만감 정보를 추출하여 recommendFoodByFullness()를 호출하세요.";
+    } else {
+      recommendedAction = "음식/맛집 관련 질문이 아니므로 일반적인 응답을 제공하세요.";
+    }
+
+    return {
+      ...analysis,
+      recommendedAction
+    };
   }
 
   /**

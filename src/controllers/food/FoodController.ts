@@ -1,7 +1,39 @@
 import { Controller, Post, Body } from "@nestjs/common";
 import core, { TypedRoute } from "@nestia/core";
+import { tags } from "typia";
 import { IFoodRecommendationRequest, IFoodRecommendationResponse, FullnessLevel } from "../../api/structures/food/IFoodRecommendation";
 import { FoodService } from "../../services/FoodService";
+
+/**
+ * 포만감 분석 요청 인터페이스
+ */
+export interface IHungerAnalysisRequest {
+  /**
+   * 포만감 레벨 (1-3)
+   * @description 1: 매우 배부름, 3: 매우 배고픔
+   */
+  fullness: number & tags.Type<"uint32"> & tags.Minimum<1> & tags.Maximum<3>;
+}
+
+/**
+ * 포만감 분석 응답 인터페이스
+ */
+export interface IHungerAnalysisResponse {
+  /**
+   * 현재 상태 설명
+   */
+  status: string;
+
+  /**
+   * 권장 식사량
+   */
+  recommendedPortion: "minimal" | "light" | "normal" | "hearty";
+
+  /**
+   * 일반적인 조언
+   */
+  advice: string;
+}
 
 /**
  * 음식 추천 HTTP API 컨트롤러
@@ -70,28 +102,9 @@ export class FoodController {
    * @tag Food
    */
   @TypedRoute.Post("analyze")
-  public analyzeHungerLevel(@core.TypedBody() params: {
-    /**
-     * 포만감 레벨 (1-3)
-     * @description 1: 매우 배부름, 3: 매우 배고픔
-     */
-    fullness: FullnessLevel;
-  }): {
-    /**
-     * 현재 상태 설명
-     */
-    status: string;
-
-    /**
-     * 권장 식사량
-     */
-    recommendedPortion: "minimal" | "light" | "normal" | "hearty";
-
-    /**
-     * 일반적인 조언
-     */
-    advice: string;
-  } {
+  public analyzeHungerLevel(
+    @core.TypedBody() params: IHungerAnalysisRequest
+  ): IHungerAnalysisResponse {
     return this.foodService.analyzeHungerLevel(params.fullness);
   }
 
