@@ -12,7 +12,7 @@ export namespace QuestionLogUtil {
   const QUESTIONS_FILE = join(LOG_DIR, 'user_history.json');
 
   const getKoreanDayOfWeek = (): string => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = new Date();
     return days[today.getDay()];
   };
