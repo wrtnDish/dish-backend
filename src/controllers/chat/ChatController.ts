@@ -93,6 +93,21 @@ export class MyChatController {
           application: foodApplication,
           execute: foodController, // FoodAgentController 인스턴스를 실행자로 설정
         },
+        {
+          protocol: "http",
+          name: "restaurant", // CALL THIS when users ask about restaurants/food in Korea
+          application: HttpLlm.application({
+            model: "chatgpt",
+            document: OpenApi.convert(
+              await fetch(
+                `http://localhost:${MyConfiguration.API_PORT()}/editor/swagger.json`,
+              ).then((r) => r.json()),
+            ),
+          }),
+          connection: {
+            host: `http://localhost:${MyConfiguration.API_PORT()}`,
+          },
+        },
       ],
       config: {
         locale: "ko-KR",
