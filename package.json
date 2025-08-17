@@ -1,8 +1,7 @@
 {
   "private": true,
-  "name": "agentica-template-nestjs",
+  "name": "wrtn-dish-backend",
   "version": "0.1.0",
-  "description": "Starter kit of Nestia",
   "main": "lib/index.js",
   "scripts": {
     "benchmark": "node bin/test/benchmark",
@@ -15,7 +14,8 @@
     "build:sdk": "rimraf src/api/functional && nestia sdk",
     "build:swagger": "npx nestia swagger",
     "build:test": "rimraf bin && tsc -p test/tsconfig.json",
-    "dev": "npm run build:test -- --watch",
+    "dev": "npm run build && npm run start:dev",
+    "dev:watch": "npm run build:test -- --watch",
     "eslint": "eslint src && eslint test",
     "eslint:fix": "eslint --fix src && eslint --fix test",
     "prepare": "ts-patch install && ts-node build/env.ts",
@@ -32,19 +32,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/samchon/nestia-start"
+    "url": "https://github.com/wrtn/wrtn-dish/dish-backend"
   },
   "keywords": [
     "nestia",
     "template",
     "boilerplate"
   ],
-  "author": "AUTHOR",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/samchon/nestia-start/issues"
+    "url": "https://github.com/wrtn/wrtn-dish/dish-backend/issues"
   },
-  "homepage": "https://github.com/samchon/nestia-start#readme",
+  "homepage": "https://github.com/wrtn/wrtn-dish/dish-backend#readme",
   "dependencies": {
     "@agentica/core": "^0.31.0",
     "@agentica/rpc": "^0.31.0",

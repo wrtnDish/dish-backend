@@ -14,9 +14,32 @@ import typia from "typia";
 import { MyConfiguration } from "../../MyConfiguration";
 import { MyGlobal } from "../../MyGlobal";
 import { QuestionLogUtil } from "../../utils/QuestionLogUtil";
+import { WeatherAgentController } from "./WeatherAgentController";
 
 
 
+/**
+ * AI 채팅 컨트롤러 with Weather API 통합
+ *
+ * @description
+ * 사용자와 AI 모델 간의 실시간 채팅을 제공하는 WebSocket 기반 컨트롤러입니다.
+ * OpenAI GPT-4o-mini 모델과 Agentica 프레임워크를 사용하여 구현되었으며,
+ * 날씨 정보 조회 기능이 Function Calling을 통해 통합되어 있습니다.
+ *
+ * **주요 기능:**
+ * - 실시간 AI 채팅 (WebSocket 기반)
+ * - 날씨 정보 조회 (Function Calling)
+ * - 좌표 변환 및 지역별 날씨 검색
+ * - 상황에 맞는 날씨 조언 제공
+ *
+ * **연결 방법:**
+ * ```javascript
+ * const ws = new WebSocket('ws://localhost:37001/chat');
+ * ```
+ *
+ * @tag Chat
+ * @summary AI 채팅 서비스 with Weather API
+ */
 @Controller("chat")
 export class MyChatController {
   @WebSocketRoute()
@@ -28,17 +51,32 @@ export class MyChatController {
       IAgenticaRpcListener
     >,
   ): Promise<void> {
+    // 날씨 기능을 제공하는 컨트롤러 인스턴스 생성
+    const weatherController = new WeatherAgentController();
+
+    // Typia를 사용하여 WeatherAgentController의 LLM Application 스키마 생성
+    const weatherApplication = typia.llm.application<WeatherAgentController, "chatgpt">();
+
+    // Agentica AI 에이전트 생성 및 날씨 기능 통합
     const agent: Agentica<"chatgpt"> = new Agentica({
       model: "chatgpt",
       vendor: {
-        api: new OpenAI({
-          apiKey: MyGlobal.env.OPENAI_API_KEY,
-          baseURL: "https://openrouter.ai/api/v1"
-        }),
+        api: new OpenAI({ apiKey: MyGlobal.env.OPENAI_API_KEY }),
         model: "gpt-4o-mini",
       },
+      // AI 모델이 사용할 수 있는 함수들을 등록
       controllers: [
+        {
+          protocol: "class",
+          name: "WeatherService",
+          application: weatherApplication,
+          execute: weatherController, // WeatherAgentController 인스턴스를 실행자로 설정
+        },
       ],
+      config: {
+        locale: "ko-KR",
+        timezone:"Asia/Seoul"
+      }
     });
 
     // 원래 conversate 메서드를 감싸서 질문 로깅 기능 추가
@@ -55,10 +93,13 @@ export class MyChatController {
       return await originalConversate(message);
     };
 
+
+    // RPC 서비스 생성 및 연결
     const service: AgenticaRpcService<"chatgpt"> = new AgenticaRpcService({
       agent,
       listener: acceptor.getDriver(),
     });
+
     await acceptor.accept(service);
   }
 }
