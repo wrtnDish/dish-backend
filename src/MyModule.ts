@@ -3,6 +3,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 
 import { ChatModule } from "./controllers/chat/ChatModule";
+import { WeatherModule } from "./controllers/weather/WeatherModule";
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { ChatModule } from "./controllers/chat/ChatModule";
       serveRoot: "/",
     }),
     ChatModule,
+    WeatherModule,
   ],
 })
 export class MyModule {}
