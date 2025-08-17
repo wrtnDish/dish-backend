@@ -6,3 +6,5 @@
 //================================================================
 export * as chat from "./chat";
 export * as weather from "./weather";
+export * as food from "./food";
+export * as restaurant from "./restaurant";
