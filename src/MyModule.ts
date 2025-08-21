@@ -4,8 +4,9 @@ import { join } from "path";
 
 import { ChatModule } from "./controllers/chat/ChatModule";
 import { WeatherModule } from "./controllers/weather/WeatherModule";
-import { FoodModule } from "./controllers/food/FoodModule";
 import { RestaurantModule } from "./controllers/restaurant/RestaurantModule";
+import { FoodModule } from "./modules/FoodModule";
+import { FoodModule as SatietyFoodModule } from "./controllers/food/FoodModule";
 
 @Module({
   imports: [
@@ -17,6 +18,8 @@ import { RestaurantModule } from "./controllers/restaurant/RestaurantModule";
     WeatherModule,
     FoodModule,
     RestaurantModule,
+    FoodModule,
+    SatietyFoodModule,
   ],
 })
 export class MyModule {}

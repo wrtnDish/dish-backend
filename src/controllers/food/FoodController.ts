@@ -47,11 +47,8 @@ export interface IHungerAnalysisResponse {
  */
 @Controller("food")
 export class FoodController {
-  private readonly foodService: FoodService;
-
-  constructor() {
-    this.foodService = new FoodService();
-  }
+  
+  constructor(private readonly foodService: FoodService) {}
 
   /**
    * 포만감 기반 음식 추천 API

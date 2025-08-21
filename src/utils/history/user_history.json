@@ -1,1 +1,182 @@
-[]
+[
+  {
+    "chat": "{\"message\":\"일요일은 치킨이지!\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755408448955}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"월요일 점심에 샐러드 먹고 싶다\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755494848955}",
+    "day": "Monday"
+  },
+  {
+    "chat": "{\"message\":\"화요일엔 도시락이 편하지\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755581248955}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"message\":\"수요일 저녁엔 찜/탕이 땡긴다\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755667648955}",
+    "day": "Wednesday"
+  },
+  {
+    "chat": "{\"message\":\"목요일은 피자 파티!\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755754048955}",
+    "day": "Thursday"
+  },
+  {
+    "chat": "{\"message\":\"금요일엔 한식에 소주 한잔\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755840448955}",
+    "day": "Friday"
+  },
+  {
+    "chat": "{\"message\":\"토요일 오후엔 디저트 카페\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755926848955}",
+    "day": "Saturday"
+  },
+  {
+    "chat": "{\"message\":\"일요일엔 피자도 좋다\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756013248955}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"월요일 아침엔 커피 필수\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756099648955}",
+    "day": "Monday"
+  },
+  {
+    "chat": "{\"message\":\"화요일 저녁엔 중식이 먹고 싶네\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756186048955}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"message\":\"수요일 점심은 샌드위치로 간단히\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756272448955}",
+    "day": "Wednesday"
+  },
+  {
+    "chat": "{\"message\":\"목요일엔 치킨도 괜찮다\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756358848955}",
+    "day": "Thursday"
+  },
+  {
+    "chat": "{\"message\":\"금요일 저녁엔 버거 어때?\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756445248955}",
+    "day": "Friday"
+  },
+  {
+    "chat": "{\"message\":\"토요일엔 샐러드도 괜찮네\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756531648955}",
+    "day": "Saturday"
+  },
+  {
+    "chat": "{\"message\":\"일요일 점심은 한식으로\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756618048955}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"월요일엔 도시락을 시켜야겠다\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756704448955}",
+    "day": "Monday"
+  },
+  {
+    "chat": "{\"message\":\"화요일엔 아시안 음식이 좋아\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756790848955}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"message\":\"수요일엔 디저트 먹고 싶어\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756877248955}",
+    "day": "Wednesday"
+  },
+  {
+    "chat": "{\"message\":\"목요일 점심은 회/해물이 딱이지\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1756963648955}",
+    "day": "Thursday"
+  },
+  {
+    "chat": "{\"message\":\"금요일은 구이에 맥주 한잔!\",\"location\":{\"latitude\":36.35,\"longitude\":127.30,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1757050048955}",
+    "day": "Friday"
+  },
+  {
+    "chat": "{\"message\":\"너 뭐할 수 있어?\",\"location\":{\"latitude\":36.34935166542487,\"longitude\":127.29823401962116,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755431655432}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.34935166542487,\"longitude\":127.29823401962116,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755431674120}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"지금 배고픔은 2이고, 지역은 대전이야\",\"location\":{\"latitude\":36.34935166542487,\"longitude\":127.29823401962116,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755431893757}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"대전 한밭대학교 맛집 알려줘\",\"location\":{\"latitude\":36.34935166542487,\"longitude\":127.29823401962116,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755431986148}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.34937582359623,\"longitude\":127.2981642292903,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755432379034}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 포만감은 1이야. 지역은 대전이야\",\"location\":{\"latitude\":36.34937582359623,\"longitude\":127.2981642292903,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755432397779}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.34938242633858,\"longitude\":127.29814749697167,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755432444814}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"지금 보통 수준이야\",\"location\":{\"latitude\":36.34938242633858,\"longitude\":127.29814749697167,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755432461434}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"보통수준이 음식좀 추천해줘\",\"location\":{\"latitude\":36.34938242633858,\"longitude\":127.29814749697167,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755432499034}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너 뭐할 수 있어\",\"location\":{\"latitude\":36.34933946402787,\"longitude\":127.29838454119307,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433024584}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.34933946402787,\"longitude\":127.29838454119307,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433040974}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 3이야\",\"location\":{\"latitude\":36.34933946402787,\"longitude\":127.29838454119307,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433061731}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"너 뭐할 수 있어?\",\"location\":{\"latitude\":36.349380366696536,\"longitude\":127.29809256261098,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433276580}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식추천해줘\",\"location\":{\"latitude\":36.349380366696536,\"longitude\":127.29809256261098,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433285553}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 3이고 대전 한밭대야\",\"location\":{\"latitude\":36.349380366696536,\"longitude\":127.29809256261098,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433305417}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.349364208694944,\"longitude\":127.29823945442682,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433840870}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 배고픔은 3이고, 위치는 대전 한밭대학교야\",\"location\":{\"latitude\":36.349364208694944,\"longitude\":127.29823945442682,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755433874650}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.349335527625,\"longitude\":127.29825763931093,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434150917}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 내 배고픔은 2점이고, 지역은 대전 한밭대학교야\",\"location\":{\"latitude\":36.349335527625,\"longitude\":127.29825763931093,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434180629}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"맛집 추천해줘\",\"location\":{\"latitude\":36.34936483322054,\"longitude\":127.29815022103371,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434418266}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.34936483322054,\"longitude\":127.29815022103371,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434431605}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 배고픔은 3이고, 지역은 서울 강남이야\",\"location\":{\"latitude\":36.34936483322054,\"longitude\":127.29815022103371,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434446489}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"음식 추천해줘\",\"location\":{\"latitude\":36.34942265542646,\"longitude\":127.29807535913802,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434482774}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"현재 배고픔은 3점이고, 지역은 대전 한밭대학교야\",\"location\":{\"latitude\":36.34942265542646,\"longitude\":127.29807535913802,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434503535}",
+    "day": "Sunday"
+  },
+  {
+    "chat": "{\"message\":\"그럼 내 배고픔은 3이고, 서울 강남지역 이야\",\"location\":{\"latitude\":36.34942265542646,\"longitude\":127.29807535913802,\"accuracy\":35,\"isDefault\":false},\"timestamp\":1755434546563}",
+    "day": "Sunday"
+  }
+]
