@@ -89,21 +89,21 @@ export class IntegratedScoringService {
     let totalScore = 0;
     const reasons: string[] = [];
 
-    // 1. 날씨 기반 점수 (0-40점)
-    const weatherScore = this.calculateWeatherScore(category, weather);
-    totalScore += weatherScore.score;
-    if (weatherScore.score > 0) {
-      reasons.push(weatherScore.reason);
-    }
-
-    // 2. 사용자 히스토리 기반 점수 (0-30점)
+    // 1. 사용자 히스토리 기반 점수 (0-50점) - 가장 높은 가중치
     const historyScore = this.calculateHistoryScore(category, dayPreferenceMap);
     totalScore += historyScore.score;
     if (historyScore.score > 0) {
       reasons.push(historyScore.reason);
     }
 
-    // 3. 배고픔 정도 기반 점수 (0-20점)
+    // 2. 날씨 기반 점수 (0-25점) - 가중치 감소
+    const weatherScore = this.calculateWeatherScore(category, weather);
+    totalScore += weatherScore.score;
+    if (weatherScore.score > 0) {
+      reasons.push(weatherScore.reason);
+    }
+
+    // 3. 배고픔 정도 기반 점수 (0-15점) - 가중치 감소
     const hungerScore = this.calculateHungerScore(category, hungerLevel);
     totalScore += hungerScore.score;
     if (hungerScore.score > 0) {
@@ -134,14 +134,14 @@ export class IntegratedScoringService {
     let score = 0;
     const reasons: string[] = [];
 
-    // 온도 기반 점수 (0-25점)
+    // 온도 기반 점수 (0-15점) - 가중치 감소
     const tempScore = this.getTemperatureScore(category.serveTemp, weather.temperature);
     score += tempScore.score;
     if (tempScore.score > 0) {
       reasons.push(tempScore.reason);
     }
 
-    // 습도 기반 점수 (0-15점)
+    // 습도 기반 점수 (0-10점) - 가중치 감소
     const humidityScore = this.getHumidityScore(category, weather.humidity);
     score += humidityScore.score;
     if (humidityScore.score > 0) {
@@ -164,23 +164,23 @@ export class IntegratedScoringService {
     if (weatherTemp === "hot") {
       // 더운 날씨: 차가운 음식 선호
       if (serveTemp.includes("cold")) {
-        return { score: 25, reason: "더운 날씨에 시원한 음식" };
+        return { score: 15, reason: "더운 날씨에 시원한 음식" }; // 25점 → 15점
       } else if (serveTemp.includes("warm & cold")) {
-        return { score: 20, reason: "더운 날씨에 시원하게 드실 수 있는 음식" };
+        return { score: 12, reason: "더운 날씨에 시원하게 드실 수 있는 음식" }; // 20점 → 12점
       }
     } else if (weatherTemp === "cold") {
       // 추운 날씨: 뜨거운 음식 선호
       if (serveTemp === "hot") {
-        return { score: 25, reason: "추운 날씨에 따뜻한 음식" };
+        return { score: 15, reason: "추운 날씨에 따뜻한 음식" }; // 25점 → 15점
       } else if (serveTemp === "warm") {
-        return { score: 20, reason: "추운 날씨에 따뜻한 음식" };
+        return { score: 12, reason: "추운 날씨에 따뜻한 음식" }; // 20점 → 12점
       }
     } else {
       // 온화한 날씨: 모든 온도 적당
       if (serveTemp === "warm") {
-        return { score: 15, reason: "온화한 날씨에 적당한 온도" };
+        return { score: 9, reason: "온화한 날씨에 적당한 온도" }; // 15점 → 9점
       } else if (serveTemp.includes("warm & cold")) {
-        return { score: 12, reason: "온화한 날씨에 다양하게 즐길 수 있는 음식" };
+        return { score: 7, reason: "온화한 날씨에 다양하게 즐길 수 있는 음식" }; // 12점 → 7점
       }
     }
 
@@ -198,13 +198,13 @@ export class IntegratedScoringService {
       // 높은 습도: 가벼운 음식, 시원한 음식 선호
       if (category.nameKo.includes("샐러드") || category.nameKo.includes("회") || 
           category.nameKo.includes("디저트")) {
-        return { score: 15, reason: "습한 날씨에 가벼운 음식" };
+        return { score: 10, reason: "습한 날씨에 가벼운 음식" }; // 15점 → 10점
       }
     } else if (humidity === "low") {
       // 낮은 습도: 국물 있는 음식 선호
       if (category.nameKo.includes("찜/탕") || category.nameKo.includes("죽") ||
           category.nameKo.includes("커피/차")) {
-        return { score: 15, reason: "건조한 날씨에 수분 보충 음식" };
+        return { score: 10, reason: "건조한 날씨에 수분 보충 음식" }; // 15점 → 10점
       }
     }
 
@@ -224,8 +224,8 @@ export class IntegratedScoringService {
     const preferenceScore = dayPreferenceMap.get(category.nameKo) || 0;
     
     if (preferenceScore > 0) {
-      // 선호도 점수를 30점 만점으로 변환
-      const score = (preferenceScore / 10) * 30;
+      // 선호도 점수를 50점 만점으로 변환 (가중치 대폭 증가)
+      const score = (preferenceScore / 10) * 50;
       return {
         score,
         reason: `이 요일에 자주 드시는 음식 (선호도: ${preferenceScore.toFixed(1)})`
@@ -248,17 +248,17 @@ export class IntegratedScoringService {
     if (hungerLevel === 3) {
       // 매우 배고픔: 든든한 음식 선호
       if (this.isHeartyFood(category)) {
-        return { score: 20, reason: "배고픈 상태에 든든한 음식" };
+        return { score: 15, reason: "배고픈 상태에 든든한 음식" }; // 20점 → 15점
       }
     } else if (hungerLevel === 2) {
       // 보통: 적당한 음식 선호
       if (this.isModerateFood(category)) {
-        return { score: 15, reason: "적당한 배고픔에 맞는 음식" };
+        return { score: 12, reason: "적당한 배고픔에 맞는 음식" }; // 15점 → 12점
       }
     } else if (hungerLevel === 1) {
       // 배부름: 가벼운 음식 선호
       if (this.isLightFood(category)) {
-        return { score: 20, reason: "배부른 상태에 가벼운 음식" };
+        return { score: 15, reason: "배부른 상태에 가벼운 음식" }; // 20점 → 15점
       }
     }
 
