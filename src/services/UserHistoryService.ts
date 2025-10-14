@@ -11,7 +11,7 @@ export class UserHistoryService {
 
   constructor() {
     // user_history.json 파일 경로 설정
-    this.historyFilePath = path.join(__dirname, "../utils/history/user_history.json");
+    this.historyFilePath = path.join(process.cwd(), "src/utils/history/user_history.json");
   }
 
   /**
@@ -23,13 +23,13 @@ export class UserHistoryService {
     try {
       // 현재 요일 결정 (파라미터가 없으면 오늘 요일 사용)
       const today = currentDay || this.getCurrentDay();
-      
+
       // 사용자 히스토리 데이터 로드
       const historyData = this.loadUserHistory();
-      
+
       // 요일별 음식 선호도 분석
       const dayPreferenceMap = this.calculateDayPreference(historyData, today);
-      
+
       return dayPreferenceMap;
     } catch (error) {
       console.error("사용자 히스토리 분석 중 오류 발생:", error);
@@ -50,7 +50,7 @@ export class UserHistoryService {
 
       const fileContent = fs.readFileSync(this.historyFilePath, "utf-8");
       const historyData = JSON.parse(fileContent);
-      
+
       if (!Array.isArray(historyData)) {
         console.warn("히스토리 데이터 형식이 올바르지 않습니다.");
         return [];
@@ -80,10 +80,10 @@ export class UserHistoryService {
    */
   private calculateDayPreference(historyData: any[], targetDay: string): Map<string, number> {
     const preferenceMap = new Map<string, number>();
-    
+
     // 해당 요일의 데이터만 필터링
     const dayData = historyData.filter(item => item.day === targetDay);
-    
+
     if (dayData.length === 0) {
       console.log(`${targetDay}에 대한 히스토리 데이터가 없습니다.`);
       return preferenceMap;
@@ -91,7 +91,7 @@ export class UserHistoryService {
 
     // 요일별 음식 키워드 빈도 계산
     const foodKeywordCount = new Map<string, number>();
-    
+
     dayData.forEach(item => {
       try {
         // chat 필드가 JSON 문자열인 경우 파싱
@@ -127,10 +127,10 @@ export class UserHistoryService {
     // 각 음식 카테고리별로 키워드 매칭
     FOOD_CATEGORIES.forEach(category => {
       const keywords = this.getCategoryKeywords(category.nameKo, category.name);
-      
+
       keywords.forEach(keyword => {
-        if (lowerMessage.includes(keyword.toLowerCase()) || 
-            message.includes(keyword)) {
+        if (lowerMessage.includes(keyword.toLowerCase()) ||
+          message.includes(keyword)) {
           const currentCount = keywordCount.get(category.nameKo) || 0;
           keywordCount.set(category.nameKo, currentCount + 1);
         }
@@ -150,28 +150,28 @@ export class UserHistoryService {
 
     // 카테고리별 추가 키워드
     const additionalKeywords: { [key: string]: string[] } = {
-      "피자": ["pizza", "피자"],
-      "샐러드": ["salad", "샐러드", "야채"],
-      "디저트": ["dessert", "디저트", "후식", "달콤"],
-      "양식": ["western", "양식", "스테이크", "파스타"],
-      "한식": ["korean", "한식", "김치", "밥", "국", "찌개"],
-      "치킨": ["chicken", "치킨", "닭", "튀김"],
-      "분식": ["snack", "분식", "떡볶이", "순대", "튀김"],
-      "돈까스": ["cutlet", "돈까스", "까스"],
-      "족발/보쌈": ["족발", "보쌈", "수육"],
-      "찜/탕": ["찜", "탕", "국물", "끓"],
-      "구이": ["grilled", "구이", "고기", "바베큐"],
-      "중식": ["chinese", "중식", "중국", "짜장", "짬뽕"],
-      "일식": ["japanese", "일식", "일본", "초밥", "라멘"],
-      "회/해물": ["sashimi", "회", "해물", "생선", "조개"],
-      "커피/차": ["coffee", "tea", "커피", "차", "음료"],
-      "간식": ["snacks", "간식", "과자"],
-      "아시안": ["asian", "아시안", "동남아"],
-      "샌드위치": ["sandwich", "샌드위치"],
-      "버거": ["burger", "버거", "햄버거"],
-      "멕시칸": ["mexican", "멕시칸", "타코"],
-      "도시락": ["lunch box", "도시락", "박스"],
-      "죽": ["porridge", "죽", "미음"]
+      "피자": ["pizza", "피자", "도우", "치즈", "토핑", "페퍼로니", "오븐", "피자헛"],
+      "샐러드": ["salad", "샐러드", "야채", "드레싱", "채소", "건강식", "그린", "올리브"],
+      "디저트": ["dessert", "디저트", "후식", "달콤", "케이크", "초콜릿", "마카롱", "푸딩"],
+      "양식": ["western", "양식", "스테이크", "파스타", "리조또", "그라탱", "오븐", "크림"],
+      "한식": ["korean", "한식", "김치", "밥", "국", "찌개", "불고기", "된장", "비빔"],
+      "치킨": ["chicken", "치킨", "닭", "튀김", "양념", "프라이드", "핫윙", "순살", "치밥"],
+      "분식": ["snack", "분식", "떡볶이", "순대", "튀김", "김밥", "라면", "오뎅", "분식집"],
+      "돈까스": ["cutlet", "돈까스", "까스", "등심", "안심", "소스", "튀김", "정식"],
+      "족발/보쌈": ["족발", "보쌈", "수육", "쌈", "마늘", "새우젓", "보쌈김치", "무말랭이"],
+      "찜/탕": ["찜", "탕", "국물", "끓", "매운탕", "아구찜", "갈비찜", "해장", "전골"],
+      "구이": ["grilled", "구이", "고기", "바베큐", "석쇠", "숯불", "삼겹살", "불판"],
+      "중식": ["chinese", "중식", "중국", "짜장", "짬뽕", "탕수육", "마라", "볶음밥", "딤섬"],
+      "일식": ["japanese", "일식", "일본", "초밥", "라멘", "돈부리", "우동", "덮밥", "튀김"],
+      "회/해물": ["sashimi", "회", "해물", "생선", "조개", "초장", "광어", "연어", "물회"],
+      "커피/차": ["coffee", "tea", "커피", "차", "음료", "카페인", "라떼", "아메리카노", "녹차"],
+      "간식": ["snacks", "간식", "과자", "쿠키", "비스킷", "젤리", "초코", "핫도그"],
+      "아시안": ["asian", "아시안", "동남아", "베트남", "태국", "쌀국수", "나시고랭", "팟타이"],
+      "샌드위치": ["sandwich", "샌드위치", "햄", "치즈", "베이컨", "토스트", "샐러드"],
+      "버거": ["burger", "버거", "햄버거", "패티", "불고기버거", "치즈버거", "세트"],
+      "멕시칸": ["mexican", "멕시칸", "타코", "브리또", "살사", "퀘사디아", "나쵸"],
+      "도시락": ["lunch box", "도시락", "박스", "반찬", "정식", "김밥", "계란말이"],
+      "죽": ["porridge", "죽", "미음", "전복죽", "야채죽", "단호박죽", "소화", "건강식"]
     };
 
     if (additionalKeywords[nameKo]) {
@@ -187,12 +187,12 @@ export class UserHistoryService {
    * @param preferenceMap 선호도 점수 맵
    */
   private convertKeywordCountToScore(
-    keywordCount: Map<string, number>, 
+    keywordCount: Map<string, number>,
     preferenceMap: Map<string, number>
   ): void {
     // 최대 빈도수를 구해서 정규화에 사용
     const maxCount = Math.max(...Array.from(keywordCount.values()), 1);
-    
+
     keywordCount.forEach((count, categoryName) => {
       // 빈도수를 0-10점 사이의 점수로 변환
       const score = (count / maxCount) * 10;
@@ -209,15 +209,15 @@ export class UserHistoryService {
    */
   public printPreferenceScore(preferenceMap: Map<string, number>, day: string): void {
     console.log(`\n=== ${day} 요일 음식 선호도 점수 ===`);
-    
+
     // 점수 순으로 정렬하여 출력
     const sortedEntries = Array.from(preferenceMap.entries())
       .sort((a, b) => b[1] - a[1]);
-    
+
     sortedEntries.forEach(([category, score]) => {
       console.log(`${category}: ${score.toFixed(2)}점`);
     });
-    
+
     if (sortedEntries.length === 0) {
       console.log("해당 요일에 대한 선호도 데이터가 없습니다.");
     }
