@@ -1,0 +1,159 @@
+THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
+
+This project incorporates material from the projects listed below (Third Party Code).
+The original copyright notice and the license under which we received such Third Party Code
+are set forth below. This Third Party Code is licensed to you under their original license terms.
+
+================================================================================
+
+TEMPLATE ATTRIBUTION
+
+This project is based on:
+- Agentica Framework: Copyright (c) 2025 Wrtn Technologies (MIT License)
+  Homepage: https://wrtnlabs.io/agentica
+- Nestia Template: Copyright (c) 2022 Jeongho Nam (MIT License)
+  Repository: https://github.com/samchon/nestia
+
+Significant modifications and additions have been made by Team WiSoft for the
+WRTN Dish - AI Food Recommendation System project.
+
+================================================================================
+
+1. Agentica (@agentica/core, @agentica/rpc)
+   Version: ^0.31.2
+   License: MIT
+   Copyright: Agentica Contributors
+   Repository: https://github.com/agentica-project/agentica
+
+2. Nestia (@nestia/core, @nestia/sdk, @nestia/fetcher, @nestia/editor, @nestia/e2e, @nestia/benchmark)
+   Version: ^7.3.3
+   License: MIT
+   Copyright: Jeongho Nam
+   Repository: https://github.com/samchon/nestia
+
+3. NestJS (@nestjs/common, @nestjs/core, @nestjs/platform-express, @nestjs/serve-static, @nestjs/cli)
+   Version: ^10.4.20
+   License: MIT
+   Copyright: Kamil Mysliwiec
+   Repository: https://github.com/nestjs/nest
+
+4. OpenAI Node.js Library (openai)
+   Version: 5.12.1
+   License: Apache-2.0
+   Copyright: OpenAI
+   Repository: https://github.com/openai/openai-node
+
+5. Axios (axios)
+   Version: ^1.11.0
+   License: MIT
+   Copyright: Matt Zabriskie
+   Repository: https://github.com/axios/axios
+
+6. TGrid (tgrid)
+   Version: ^1.2.0
+   License: MIT
+   Copyright: Jeongho Nam
+   Repository: https://github.com/samchon/tgrid
+
+7. Typia (typia)
+   Version: ^9.7.1
+   License: MIT
+   Copyright: Jeongho Nam
+   Repository: https://github.com/samchon/typia
+
+8. TSTL (tstl)
+   Version: ^3.0.0
+   License: MIT
+   Copyright: Jeongho Nam
+   Repository: https://github.com/samchon/tstl
+
+9. Express (express)
+   Version: ^4.21.2
+   License: MIT
+   Copyright: TJ Holowaychuk and other contributors
+   Repository: https://github.com/expressjs/express
+
+10. TypeScript (typescript)
+    Version: ~5.9.2
+    License: Apache-2.0
+    Copyright: Microsoft Corporation
+    Repository: https://github.com/microsoft/TypeScript
+
+11. Commander.js (commander)
+    Version: 10.0.0
+    License: MIT
+    Copyright: TJ Holowaychuk and other contributors
+    Repository: https://github.com/tj/commander.js
+
+12. Dotenv (dotenv, dotenv-expand)
+    Version: ^16.6.1, ^10.0.0
+    License: BSD-2-Clause
+    Copyright: Scott Motte
+    Repository: https://github.com/motdotla/dotenv
+
+13. UUID (uuid)
+    Version: ^9.0.1
+    License: MIT
+    Copyright: Various contributors
+    Repository: https://github.com/uuidjs/uuid
+
+14. Webpack (webpack, webpack-cli, ts-loader, copy-webpack-plugin)
+    Version: ^5.101.2
+    License: MIT
+    Copyright: Tobias Koppers
+    Repository: https://github.com/webpack/webpack
+
+15. Rollup (rollup, @rollup/plugin-terser, @rollup/plugin-typescript)
+    Version: ^4.46.2
+    License: MIT
+    Copyright: Rich Harris
+    Repository: https://github.com/rollup/rollup
+
+16. Prettier (prettier, @trivago/prettier-plugin-sort-imports, prettier-plugin-prisma)
+    Version: ^3.6.2
+    License: MIT
+    Copyright: James Long and contributors
+    Repository: https://github.com/prettier/prettier
+
+17. ESLint (@typescript-eslint/eslint-plugin, @typescript-eslint/parser, eslint-plugin-deprecation)
+    License: MIT
+    Repository: https://github.com/eslint/eslint
+
+18. ts-patch (ts-patch)
+    Version: ^3.3.0
+    License: MIT
+    Repository: https://github.com/nonara/ts-patch
+
+19. typescript-transform-paths (typescript-transform-paths)
+    Version: ^3.5.5
+    License: MIT
+    Repository: https://github.com/LeDDGroup/typescript-transform-paths
+
+================================================================================
+
+RUNTIME ENVIRONMENT
+
+Bun Runtime:
+   License: MIT
+   Copyright: Jarred Sumner and Bun contributors
+   Repository: https://github.com/oven-sh/bun
+   Note: This project uses Bun as its JavaScript runtime and package manager
+
+================================================================================
+
+ADDITIONAL NOTICES
+
+External APIs:
+- OpenWeatherMap API: Used under their terms of service
+- Naver Local Search API: Used under Naver Open API terms of service
+
+For detailed license texts, please refer to each package's LICENSE file in node_modules
+or visit their respective repository URLs listed above.
+
+To view licenses of all dependencies, run:
+  bun pm ls --all
+  bunx license-checker --summary
+
+================================================================================
+
+This software and its documentation are provided "as is" without warranty of any kind.
