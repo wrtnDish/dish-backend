@@ -144,7 +144,7 @@ Bun Runtime:
 ADDITIONAL NOTICES
 
 External APIs:
-- OpenWeatherMap API: Used under their terms of service
+- 기상청(KMA) 초단기예보 API: Used under Korea Meteorological Administration's terms of service
 - Naver Local Search API: Used under Naver Open API terms of service
 
 For detailed license texts, please refer to each package's LICENSE file in node_modules
