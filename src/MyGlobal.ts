@@ -13,7 +13,7 @@ export class MyGlobal {
 export namespace MyGlobal {
   export interface IEnvironments {
     API_PORT: `${number}`;
-    OPENAI_API_KEY: string;
+    OPENROUTER_API_KEY: string;
     WEATHER_API_KEY: string;
     NAVER_CLIENT_ID: string;     // Naver API client ID
     NAVER_CLIENT_SECRET: string; // Naver API client secret
