@@ -88,7 +88,7 @@ export class MyChatController {
       model: "chatgpt",
       vendor: {
         api: new OpenAI({
-          apiKey: MyGlobal.env.OPENAI_API_KEY,
+          apiKey: MyGlobal.env.OPENROUTER_API_KEY,
           baseURL: "https://openrouter.ai/api/v1",
         }),
         model: "gpt-4o-mini",
