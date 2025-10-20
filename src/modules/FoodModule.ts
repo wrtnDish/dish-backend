@@ -1,9 +1,10 @@
 import { Module } from "@nestjs/common";
+
 import { FoodEvaluationController } from "../controllers/food/FoodEvaluationController";
-import { FoodEvaluationService } from "../services/FoodEvaluationService";
-import { WeatherAnalysisService } from "../services/WeatherAnalysisService";
-import { FoodScoringService } from "../services/FoodScoringService";
 import { WeatherModule } from "../controllers/weather/WeatherModule";
+import { FoodEvaluationService } from "../services/FoodEvaluationService";
+import { FoodScoringService } from "../services/FoodScoringService";
+import { WeatherAnalysisService } from "../services/WeatherAnalysisService";
 
 /**
  * 음식 추천 모듈
@@ -13,18 +14,12 @@ import { WeatherModule } from "../controllers/weather/WeatherModule";
   imports: [
     WeatherModule, // 날씨 서비스 의존성
   ],
-  controllers: [
-    FoodEvaluationController,
-  ],
+  controllers: [FoodEvaluationController],
   providers: [
     FoodEvaluationService,
     WeatherAnalysisService,
     FoodScoringService,
   ],
-  exports: [
-    FoodEvaluationService,
-    WeatherAnalysisService,
-    FoodScoringService,
-  ],
+  exports: [FoodEvaluationService, WeatherAnalysisService, FoodScoringService],
 })
 export class FoodModule {}

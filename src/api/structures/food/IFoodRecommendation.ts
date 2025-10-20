@@ -1,5 +1,6 @@
 import { tags } from "typia";
 
+
 /**
  * 포만감 레벨
  * @description 사용자의 현재 포만감 정도를 나타내는 1-3 점수

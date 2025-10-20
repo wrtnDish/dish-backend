@@ -15,7 +15,9 @@ export class MyBackend {
     // OPEN THE BACKEND SERVER
     //----
     // MOUNT CONTROLLERS
-    this.application_ = await NestFactory.create(MyModule, { logger: ['error', 'warn', 'log', 'debug', 'verbose'] });
+    this.application_ = await NestFactory.create(MyModule, {
+      logger: ["error", "warn", "log", "debug", "verbose"],
+    });
     await WebSocketAdaptor.upgrade(this.application_);
 
     // THE SWAGGER EDITOR

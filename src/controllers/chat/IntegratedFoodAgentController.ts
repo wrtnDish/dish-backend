@@ -1,17 +1,12 @@
-import { 
-  IFoodRecommendationRequest, 
-  IFoodRecommendationResponse, 
-  FullnessLevel 
-} from "../../api/structures/food/IFoodRecommendation";
+import { FullnessLevel } from "../../api/structures/food/IFoodRecommendation";
 import { ILatLng } from "../../api/structures/weather/IWeatherForecast";
-import { IFoodEvaluationRequest, IScoredFoodCategory } from "../../api/structures/food/IFoodCategory";
-import { FoodService } from "../../services/FoodService";
-import { FoodEvaluationService } from "../../services/FoodEvaluationService";
-import { WeatherService } from "../../services/WeatherService";
-import { WeatherAnalysisService } from "../../services/WeatherAnalysisService";
-import { FoodScoringService } from "../../services/FoodScoringService";
-import { IntegratedScoringService } from "../../services/IntegratedScoringService";
 import { RestaurantProvider } from "../../providers/restaurant/RestaurantProvider";
+import { FoodEvaluationService } from "../../services/FoodEvaluationService";
+import { FoodScoringService } from "../../services/FoodScoringService";
+import { FoodService } from "../../services/FoodService";
+import { IntegratedScoringService } from "../../services/IntegratedScoringService";
+import { WeatherAnalysisService } from "../../services/WeatherAnalysisService";
+import { WeatherService } from "../../services/WeatherService";
 import { UserHistoryService } from "../../services/UserHistoryService";
 import { FOOD_CATEGORIES } from "../../data/foodCategories";
 

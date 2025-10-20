@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { 
-  IFoodRecommendationRequest, 
-  IFoodRecommendationResponse, 
-  FullnessLevel 
-} from "../api/structures/food/IFoodRecommendation";
+
+
+
+import { FullnessLevel, IFoodRecommendationRequest, IFoodRecommendationResponse } from "../api/structures/food/IFoodRecommendation";
+
 
 /**
  * 음식 추천 서비스

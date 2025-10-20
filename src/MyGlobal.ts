@@ -15,7 +15,7 @@ export namespace MyGlobal {
     API_PORT: `${number}`;
     OPENROUTER_API_KEY: string;
     WEATHER_API_KEY: string;
-    NAVER_CLIENT_ID: string;     // Naver API client ID
+    NAVER_CLIENT_ID: string; // Naver API client ID
     NAVER_CLIENT_SECRET: string; // Naver API client secret
   }
 }

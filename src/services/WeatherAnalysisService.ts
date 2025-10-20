@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { WeatherTemperature, WeatherHumidity, IWeatherConditions } from "../api/structures/food/IFoodCategory";
+
+import {
+  IWeatherConditions,
+  WeatherHumidity,
+  WeatherTemperature,
+} from "../api/structures/food/IFoodCategory";
 import { ISimpleWeatherResponse } from "../api/structures/weather/IWeatherForecast";
 
 /**
@@ -8,20 +13,19 @@ import { ISimpleWeatherResponse } from "../api/structures/weather/IWeatherForeca
  */
 @Injectable()
 export class WeatherAnalysisService {
-  
   /**
    * 기온을 카테고리로 분류
    * @param temperature 섭씨 온도 (°C)
    * @returns 온도 분류 결과
-   * 
+   *
    * @description
    * - hot: 28°C 이상 (더운 날씨)
-   * - moderate: 18°C 이상 ~ 27°C 이하 (온화한 날씨)  
+   * - moderate: 18°C 이상 ~ 27°C 이하 (온화한 날씨)
    * - cold: 17°C 이하 (추운 날씨)
    */
   public classifyTemperature(temperature: number | null): WeatherTemperature {
     if (temperature === null) return "moderate";
-    
+
     if (temperature >= 28) return "hot";
     if (temperature >= 18) return "moderate";
     return "cold";
@@ -31,7 +35,7 @@ export class WeatherAnalysisService {
    * 습도를 카테고리로 분류
    * @param humidity 상대습도 (%)
    * @returns 습도 분류 결과
-   * 
+   *
    * @description
    * - high: 70% 이상 (높은 습도)
    * - moderate: 40% 이상 ~ 69% 이하 (보통 습도)
@@ -39,7 +43,7 @@ export class WeatherAnalysisService {
    */
   public classifyHumidity(humidity: number | null): WeatherHumidity {
     if (humidity === null) return "moderate";
-    
+
     if (humidity >= 70) return "high";
     if (humidity >= 40) return "moderate";
     return "low";
@@ -50,15 +54,19 @@ export class WeatherAnalysisService {
    * @param weatherData 간단한 날씨 응답 데이터
    * @returns 음식 추천을 위한 날씨 조건
    */
-  public analyzeWeatherForFoodRecommendation(weatherData: ISimpleWeatherResponse): IWeatherConditions {
-    const temperature = this.classifyTemperature(weatherData.current.temperature);
+  public analyzeWeatherForFoodRecommendation(
+    weatherData: ISimpleWeatherResponse,
+  ): IWeatherConditions {
+    const temperature = this.classifyTemperature(
+      weatherData.current.temperature,
+    );
     const humidity = this.classifyHumidity(weatherData.current.humidity);
 
     return {
       temperature,
       humidity,
       actualTemperature: weatherData.current.temperature,
-      actualHumidity: weatherData.current.humidity
+      actualHumidity: weatherData.current.humidity,
     };
   }
 
@@ -106,7 +114,7 @@ export class WeatherAnalysisService {
   public generateWeatherSummary(conditions: IWeatherConditions): string {
     const tempDesc = this.getTemperatureDescription(conditions.temperature);
     const humidityDesc = this.getHumidityDescription(conditions.humidity);
-    
+
     return `${tempDesc}, ${humidityDesc}`;
   }
 }

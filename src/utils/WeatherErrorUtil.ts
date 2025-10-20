@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 
+
 /**
  * 날씨 API 관련 에러 처리 유틸리티
  * 

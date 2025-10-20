@@ -1,10 +1,7 @@
-import { 
-  IFoodRecommendationRequest, 
-  IFoodRecommendationResponse, 
-  FullnessLevel 
-} from "../../api/structures/food/IFoodRecommendation";
+import { FullnessLevel, IFoodRecommendationRequest, IFoodRecommendationResponse } from "../../api/structures/food/IFoodRecommendation";
 import { FoodService } from "../../services/FoodService";
 import { MessageAnalyzer } from "../../utils/MessageAnalyzer";
+
 
 /**
  * 기본 음식 추천 컨트롤러 (비활성화됨)
