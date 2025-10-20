@@ -14,8 +14,8 @@ import typia from "typia";
 import { MyConfiguration } from "../../MyConfiguration";
 import { MyGlobal } from "../../MyGlobal";
 import { QuestionLogUtil } from "../../utils/QuestionLogUtil";
-import { WeatherAgentController } from "./WeatherAgentController";
 import { IntegratedFoodAgentController } from "./IntegratedFoodAgentController";
+import { WeatherAgentController } from "./WeatherAgentController";
 
 
 /**
@@ -31,13 +31,13 @@ import { IntegratedFoodAgentController } from "./IntegratedFoodAgentController";
  *    - 위치 기반 실시간 날씨 조회
  *    - 좌표 변환 및 지역별 날씨 검색
  *    - 상황에 맞는 날씨 조언 제공
- * 
+ *
  * 2. **포만감 기반 음식 추천** (FoodRecommendationService)
  *    - 포만감 레벨(1-3) 기반 추천
  *    - 시간대별 적절한 식사 제안
  *    - 개인 선호도 고려
- * 
- * 3. **통합 날씨-음식 추천** (IntegratedFoodRecommendationService) ⭐ 
+ *
+ * 3. **통합 날씨-음식 추천** (IntegratedFoodRecommendationService) ⭐
  *    - 날씨 조건 분석 → 적합한 음식 카테고리 도출
  *    - 포만감 상태 → 식사량 조절
  *    - 두 결과를 종합한 맞춤형 최종 추천
@@ -82,7 +82,7 @@ export class MyChatController {
       IntegratedFoodAgentController,
       "chatgpt"
     >();
-    
+
     // Agentica AI 에이전트 생성 및 날씨, 음식 추천 기능 통합
     const agent: Agentica<"chatgpt"> = new Agentica({
       model: "chatgpt",
@@ -128,7 +128,7 @@ export class MyChatController {
         timezone: "Asia/Seoul",
       },
     });
-    
+
     // 원래 conversate 메서드를 감싸서 질문 로깅 기능 및 위치 정보 확인
     const originalConversate = agent.conversate.bind(agent);
     agent.conversate = async (message: string) => {
@@ -142,13 +142,13 @@ export class MyChatController {
       // 메시지에서 실제 사용자 텍스트와 위치 정보 추출
       let userMessage = message;
       let locationInfo = null;
-      
+
       try {
         const parsed = JSON.parse(message);
         if (parsed.message) {
           userMessage = parsed.message;
         }
-        
+
         // 위치 정보 추출
         if (parsed.location) {
           locationInfo = parsed.location;
@@ -156,8 +156,7 @@ export class MyChatController {
       } catch {
         // JSON이 아닌 경우 그대로 사용
       }
-      
-      
+
       // 사용자에게는 원본 메시지만 전송 (내부 로직 절대 노출 금지)
       return await originalConversate(userMessage);
     };

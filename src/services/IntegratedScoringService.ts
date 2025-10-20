@@ -1,7 +1,8 @@
 import { IFoodCategory, IScoredFoodCategory, IWeatherConditions } from "../api/structures/food/IFoodCategory";
+import { FullnessLevel } from "../api/structures/food/IFoodRecommendation";
 import { FOOD_CATEGORIES } from "../data/foodCategories";
 import { UserHistoryService } from "./UserHistoryService";
-import { FullnessLevel } from "../api/structures/food/IFoodRecommendation";
+
 
 /**
  * 통합 점수 계산 서비스
@@ -24,26 +25,27 @@ export class IntegratedScoringService {
   public async calculateIntegratedScore(
     weather: IWeatherConditions,
     hungerLevel: FullnessLevel,
-    currentDay?: string
+    currentDay?: string,
   ): Promise<IScoredFoodCategory[]> {
     try {
       // 1. 사용자 히스토리 기반 선호도 점수 가져오기
-      const dayPreferenceMap = await this.userHistoryService.analyzeDayPreference(currentDay);
-      
+      const dayPreferenceMap =
+        await this.userHistoryService.analyzeDayPreference(currentDay);
+
       // 2. 모든 카테고리에 대해 통합 점수 계산
-      const scoredCategories = FOOD_CATEGORIES.map(category => {
+      const scoredCategories = FOOD_CATEGORIES.map((category) => {
         const integratedScore = this.calculateCategoryScore(
           category,
           weather,
           hungerLevel,
-          dayPreferenceMap
+          dayPreferenceMap,
         );
 
         return {
           ...category,
           score: integratedScore.totalScore,
           rank: 0, // 나중에 설정
-          reason: integratedScore.reason
+          reason: integratedScore.reason,
         } as IScoredFoodCategory;
       });
 
@@ -52,21 +54,23 @@ export class IntegratedScoringService {
         .sort((a, b) => b.score - a.score)
         .map((category, index) => ({
           ...category,
-          rank: index + 1
+          rank: index + 1,
         }));
 
       // 4. 상위 2개 카테고리 반환
       const topTwoCategories = sortedCategories.slice(0, 2);
 
       console.log("\n=== 통합 점수 계산 결과 (상위 5개) ===");
-      sortedCategories.slice(0, 5).forEach(category => {
-        console.log(`${category.rank}. ${category.nameKo}: ${category.score.toFixed(2)}점 - ${category.reason}`);
+      sortedCategories.slice(0, 5).forEach((category) => {
+        console.log(
+          `${category.rank}. ${category.nameKo}: ${category.score.toFixed(2)}점 - ${category.reason}`,
+        );
       });
 
       return topTwoCategories;
     } catch (error) {
       console.error("통합 점수 계산 중 오류 발생:", error);
-      
+
       // 오류 발생 시 기본 카테고리 반환
       return this.getDefaultCategories();
     }
@@ -84,7 +88,7 @@ export class IntegratedScoringService {
     category: IFoodCategory,
     weather: IWeatherConditions,
     hungerLevel: FullnessLevel,
-    dayPreferenceMap: Map<string, number>
+    dayPreferenceMap: Map<string, number>,
   ): { totalScore: number; reason: string } {
     let totalScore = 0;
     const reasons: string[] = [];
@@ -117,7 +121,7 @@ export class IntegratedScoringService {
 
     return {
       totalScore: Math.round(totalScore * 100) / 100, // 소수점 2자리로 반올림
-      reason
+      reason,
     };
   }
 
@@ -129,13 +133,16 @@ export class IntegratedScoringService {
    */
   private calculateWeatherScore(
     category: IFoodCategory,
-    weather: IWeatherConditions
+    weather: IWeatherConditions,
   ): { score: number; reason: string } {
     let score = 0;
     const reasons: string[] = [];
 
     // 온도 기반 점수 (0-15점) - 가중치 감소
-    const tempScore = this.getTemperatureScore(category.serveTemp, weather.temperature);
+    const tempScore = this.getTemperatureScore(
+      category.serveTemp,
+      weather.temperature,
+    );
     score += tempScore.score;
     if (tempScore.score > 0) {
       reasons.push(tempScore.reason);
@@ -150,7 +157,7 @@ export class IntegratedScoringService {
 
     return {
       score,
-      reason: reasons.join(", ")
+      reason: reasons.join(", "),
     };
   }
 
@@ -159,7 +166,7 @@ export class IntegratedScoringService {
    */
   private getTemperatureScore(
     serveTemp: string,
-    weatherTemp: string
+    weatherTemp: string,
   ): { score: number; reason: string } {
     if (weatherTemp === "hot") {
       // 더운 날씨: 차가운 음식 선호
@@ -192,18 +199,24 @@ export class IntegratedScoringService {
    */
   private getHumidityScore(
     category: IFoodCategory,
-    humidity: string
+    humidity: string,
   ): { score: number; reason: string } {
     if (humidity === "high") {
       // 높은 습도: 가벼운 음식, 시원한 음식 선호
-      if (category.nameKo.includes("샐러드") || category.nameKo.includes("회") || 
-          category.nameKo.includes("디저트")) {
+      if (
+        category.nameKo.includes("샐러드") ||
+        category.nameKo.includes("회") ||
+        category.nameKo.includes("디저트")
+      ) {
         return { score: 10, reason: "습한 날씨에 가벼운 음식" }; // 15점 → 10점
       }
     } else if (humidity === "low") {
       // 낮은 습도: 국물 있는 음식 선호
-      if (category.nameKo.includes("찜/탕") || category.nameKo.includes("죽") ||
-          category.nameKo.includes("커피/차")) {
+      if (
+        category.nameKo.includes("찜/탕") ||
+        category.nameKo.includes("죽") ||
+        category.nameKo.includes("커피/차")
+      ) {
         return { score: 10, reason: "건조한 날씨에 수분 보충 음식" }; // 15점 → 10점
       }
     }
@@ -219,16 +232,16 @@ export class IntegratedScoringService {
    */
   private calculateHistoryScore(
     category: IFoodCategory,
-    dayPreferenceMap: Map<string, number>
+    dayPreferenceMap: Map<string, number>,
   ): { score: number; reason: string } {
     const preferenceScore = dayPreferenceMap.get(category.nameKo) || 0;
-    
+
     if (preferenceScore > 0) {
       // 선호도 점수를 50점 만점으로 변환 (가중치 대폭 증가)
       const score = (preferenceScore / 10) * 50;
       return {
         score,
-        reason: `이 요일에 자주 드시는 음식 (선호도: ${preferenceScore.toFixed(1)})`
+        reason: `이 요일에 자주 드시는 음식 (선호도: ${preferenceScore.toFixed(1)})`,
       };
     }
 
@@ -243,7 +256,7 @@ export class IntegratedScoringService {
    */
   private calculateHungerScore(
     category: IFoodCategory,
-    hungerLevel: FullnessLevel
+    hungerLevel: FullnessLevel,
   ): { score: number; reason: string } {
     if (hungerLevel === 3) {
       // 매우 배고픔: 든든한 음식 선호
@@ -269,7 +282,15 @@ export class IntegratedScoringService {
    * 든든한 음식인지 판단합니다.
    */
   private isHeartyFood(category: IFoodCategory): boolean {
-    const heartyFoods = ["한식", "찜/탕", "구이", "중식", "돈까스", "치킨", "버거"];
+    const heartyFoods = [
+      "한식",
+      "찜/탕",
+      "구이",
+      "중식",
+      "돈까스",
+      "치킨",
+      "버거",
+    ];
     return heartyFoods.includes(category.nameKo);
   }
 
@@ -277,7 +298,15 @@ export class IntegratedScoringService {
    * 적당한 음식인지 판단합니다.
    */
   private isModerateFood(category: IFoodCategory): boolean {
-    const moderateFoods = ["피자", "양식", "일식", "분식", "샌드위치", "도시락", "아시안"];
+    const moderateFoods = [
+      "피자",
+      "양식",
+      "일식",
+      "분식",
+      "샌드위치",
+      "도시락",
+      "아시안",
+    ];
     return moderateFoods.includes(category.nameKo);
   }
 
@@ -298,14 +327,83 @@ export class IntegratedScoringService {
         ...FOOD_CATEGORIES[4], // 한식
         score: 50,
         rank: 1,
-        reason: "기본 추천"
+        reason: "기본 추천",
       },
       {
         ...FOOD_CATEGORIES[5], // 치킨
         score: 45,
         rank: 2,
-        reason: "기본 추천"
-      }
+        reason: "기본 추천",
+      },
     ];
+  }
+
+  /**
+   * 오늘 요일의 음식 선택 통계를 조회합니다.
+   *
+   * @description
+   * 사용자가 오늘 요일에 과거에 선택했던 음식 카테고리의 통계를 보여줍니다.
+   * 추천 받기 전에 자신의 선택 패턴을 확인할 수 있습니다.
+   *
+   * @example
+   * 사용자: "오늘 월요일에 내가 주로 뭐 먹었어?"
+   * 사용자: "내 선택 통계 보여줘"
+   */
+  public async getTodayFoodStatistics(): Promise<{
+    success: boolean;
+    message: string;
+    data?: {
+      day: string;
+      dayKo: string;
+      totalSelections: number;
+      topSelections: Array<{
+        category: string;
+        count: number;
+        percentage: number;
+      }>;
+    };
+  }> {
+    try {
+      const userHistoryService = new UserHistoryService();
+      const stats = await userHistoryService.getDaySelectionStats();
+
+      if (stats.totalSelections === 0) {
+        return {
+          success: true,
+          message: `아직 ${stats.dayKo}에 선택하신 음식 기록이 없습니다. 추천을 받고 실제로 드신 음식을 알려주시면 통계가 쌓여요!`,
+          data: stats
+        };
+      }
+
+      // Markdown 포맷으로 통계 메시지 생성
+      const medalEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+      const statsLines = stats.topSelections.map((item, index) =>
+        `${medalEmojis[index]} **${item.category}** - ${item.count}번 (${item.percentage}%)`
+      ).join('\n');
+
+      const message = `
+  ## ${stats.dayKo} 음식 선택 통계
+
+  지금까지 **${stats.dayKo}**에 총 **${stats.totalSelections}번** 음식을 선택하셨네요!
+
+  ### 선택 Top ${stats.topSelections.length}
+  ${statsLines}
+
+  이 정보를 참고해서 새로운 추천을 받아보세요! 
+  `.trim();
+
+      return {
+        success: true,
+        message,
+        data: stats
+      };
+
+    } catch (error) {
+      console.error("통계 조회 중 오류:", error);
+      return {
+        success: false,
+        message: "통계를 불러오는 중 오류가 발생했습니다."
+      };
+    }
   }
 }
