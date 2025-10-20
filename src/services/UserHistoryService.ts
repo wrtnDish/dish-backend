@@ -222,4 +222,190 @@ export class UserHistoryService {
       console.log("해당 요일에 대한 선호도 데이터가 없습니다.");
     }
   }
+
+  /**
+   * 사용자가 실제로 선택한 음식을 user_history.json에 저장합니다.
+   *
+   * @param selection 사용자 선택 정보
+   */
+  public async saveUserSelection(selection: {
+    selectedFood: string; // "치킨", "한식", "교촌치킨" 등
+    category?: string; // 카테고리 (있으면)
+    restaurantName?: string; // 식당 이름 (있으면)
+    location?: { latitude: number; longitude: number };
+  }): Promise<void> {
+    const today = this.getCurrentDay();
+    const timestamp = Date.now();
+
+    // 메시지 구성
+    let message = `실제 선택: ${selection.selectedFood}`;
+    if (selection.restaurantName) {
+      message += ` - ${selection.restaurantName}`;
+    }
+    if (selection.category) {
+      message += ` (카테고리: ${selection.category})`;
+    }
+
+    // 새로운 히스토리 엔트리 생성
+    const historyEntry = {
+      day: today,
+      chat: JSON.stringify({
+        message,
+        selectedFood: selection.selectedFood,
+        category: selection.category,
+        restaurantName: selection.restaurantName,
+        location: selection.location,
+        timestamp: timestamp,
+        type: "user_selection", // 일반 질문과 구분하기 위한 타입
+      }),
+    };
+
+    // 기존 히스토리 로드 후 추가
+    const currentHistory = this.loadUserHistory();
+    currentHistory.push(historyEntry);
+
+    // 파일에 저장
+    fs.writeFileSync(
+      this.historyFilePath,
+      JSON.stringify(currentHistory, null, 2),
+      "utf-8",
+    );
+
+    console.log(
+      `✅ 사용자 선택 저장 완료: ${selection.selectedFood}${selection.restaurantName ? ` - ${selection.restaurantName}` : ''} (${today})`,
+    );
+  }
+
+  /**
+   * 특정 요일의 실제 선택 통계를 조회합니다.
+   *
+   * @param targetDay 대상 요일 (예: "Monday")
+   * @returns 카테고리별 선택 횟수 및 자주 방문한 음식점 (상위 5개)
+   */
+  public async getDaySelectionStats(targetDay?: string): Promise<{
+    day: string;
+    dayKo: string;
+    totalSelections: number;
+    topSelections: Array<{
+      category: string;
+      count: number;
+      percentage: number;
+      restaurants: Array<{
+        name: string;
+        count: number;
+      }>;
+    }>;
+  }> {
+    try {
+      const today = targetDay || this.getCurrentDay();
+      const historyData = this.loadUserHistory();
+
+      // 해당 요일의 "user_selection" 타입만 필터링
+      const daySelections = historyData.filter(item => {
+        if (item.day !== today) return false;
+
+        try {
+          const chatData = typeof item.chat === "string" ? JSON.parse(item.chat) : item.chat;
+          return chatData.type === "user_selection";
+        } catch {
+          return false;
+        }
+      });
+
+      if (daySelections.length === 0) {
+        return {
+          day: today,
+          dayKo: this.getKoreanDay(today),
+          totalSelections: 0,
+          topSelections: []
+        };
+      }
+
+      // 카테고리별 카운트 및 음식점 정보 저장
+      const categoryData = new Map<string, {
+        count: number;
+        restaurants: Map<string, number>;
+      }>();
+
+      daySelections.forEach(item => {
+        try {
+          const chatData = typeof item.chat === "string" ? JSON.parse(item.chat) : item.chat;
+          const category = chatData.category || chatData.selectedFood || "기타";
+          const restaurantName = chatData.restaurantName;
+
+          // 카테고리 데이터 초기화
+          if (!categoryData.has(category)) {
+            categoryData.set(category, {
+              count: 0,
+              restaurants: new Map()
+            });
+          }
+
+          const data = categoryData.get(category)!;
+          data.count += 1;
+
+          // 음식점 이름이 있으면 카운트
+          if (restaurantName) {
+            data.restaurants.set(
+              restaurantName,
+              (data.restaurants.get(restaurantName) || 0) + 1
+            );
+          }
+        } catch (error) {
+          console.warn("선택 데이터 파싱 실패:", error);
+        }
+      });
+
+      const totalCount = daySelections.length;
+
+      // 상위 5개 카테고리 정렬 및 음식점 정보 포함
+      const topSelections = Array.from(categoryData.entries())
+        .map(([category, data]) => ({
+          category,
+          count: data.count,
+          percentage: Math.round((data.count / totalCount) * 100),
+          restaurants: Array.from(data.restaurants.entries())
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 3) // 상위 3개 음식점만
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      console.log(`${today} 선택 통계: 총 ${totalCount}번, 상위 ${topSelections.length}개 카테고리`);
+
+      return {
+        day: today,
+        dayKo: this.getKoreanDay(today),
+        totalSelections: totalCount,
+        topSelections
+      };
+
+    } catch (error) {
+      console.error("선택 통계 조회 중 오류:", error);
+      const today = targetDay || this.getCurrentDay();
+      return {
+        day: today,
+        dayKo: this.getKoreanDay(today),
+        totalSelections: 0,
+        topSelections: []
+      };
+    }
+  }
+
+  /**
+   * 영어 요일을 한글로 변환합니다.
+   */
+  private getKoreanDay(englishDay: string): string {
+    const dayMap: { [key: string]: string } = {
+      "Sunday": "일요일",
+      "Monday": "월요일",
+      "Tuesday": "화요일",
+      "Wednesday": "수요일",
+      "Thursday": "목요일",
+      "Friday": "금요일",
+      "Saturday": "토요일"
+    };
+    return dayMap[englishDay] || englishDay;
+  }
 }

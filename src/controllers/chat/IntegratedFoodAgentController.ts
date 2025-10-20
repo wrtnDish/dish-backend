@@ -12,6 +12,8 @@ import { WeatherAnalysisService } from "../../services/WeatherAnalysisService";
 import { FoodScoringService } from "../../services/FoodScoringService";
 import { IntegratedScoringService } from "../../services/IntegratedScoringService";
 import { RestaurantProvider } from "../../providers/restaurant/RestaurantProvider";
+import { UserHistoryService } from "../../services/UserHistoryService";
+import { FOOD_CATEGORIES } from "../../data/foodCategories";
 
 /**
  * 통합 음식 카테고리 추천 AI 에이전트 컨트롤러
@@ -56,15 +58,15 @@ export class IntegratedFoodAgentController {
   }
 
   /**
-   * 음식 추천해줘 - 메인 음식 추천 진입점
-   * 
+   * 음식 추천해줘 - 메인 음식 추천 진입점 (통계 포함)
+   *
    * @description
-   * 사용자가 "음식 추천해줘", "맛집 추천해줘" 등으로 요청할 때 호출되는 메소드입니다.
-   * 배고픔 정도(1~3)와 현재 위치를 함께 질문합니다.
-   * 
-   * @returns 배고픔 정도와 위치 질문 정보
+   * 사용자가 "음식 추천해줘", "맛집 추천해줘" 등으로 요청할 때 호출되는 메서드입니다.
+   * 먼저 오늘 요일의 과거 선택 통계를 보여주고, 배고픔 정도(1~3)와 현재 위치를 질문합니다.
+   *
+   * @returns 배고픔 정도와 위치 질문 정보 + 오늘 요일 선택 통계
    */
-  public askForFoodRecommendation(): {
+  public async askForFoodRecommendation(): Promise<{
     question: string;
     hungerLevels: Array<{
       level: FullnessLevel;
@@ -74,9 +76,32 @@ export class IntegratedFoodAgentController {
     locationGuide: string;
     instruction: string;
     examples: string[];
-  } {
+    todayStats?: string;  // 통계 추가
+  }> {
+    // 오늘 요일 선택 통계 조회
+    const userHistoryService = new UserHistoryService();
+    const stats = await userHistoryService.getDaySelectionStats();
+
+    let statsMessage = '';
+    if (stats.totalSelections > 0) {
+      const medalEmojis = ['🥇', '🥈', '🥉'];
+      const topThree = stats.topSelections.slice(0, 3).map((item, index) => {
+        let categoryInfo = `${medalEmojis[index]} ${item.category} (${item.count}번)`;
+
+        // 음식점 정보가 있으면 추가
+        if (item.restaurants.length > 0) {
+          const restaurantNames = item.restaurants.slice(0, 2).map(r => r.name).join(', ');
+          categoryInfo += ` - ${restaurantNames}`;
+        }
+
+        return categoryInfo;
+      }).join('\n     ');
+
+      statsMessage = `\n\n📊 참고로, 지금까지 **${stats.dayKo}**에는\n     ${topThree}\n     을/를 선택하셨어요!`;
+    }
+
     return {
-      question: "🍽️ 맞춤 음식을 추천해드리기 위해 배고픔 정도와 현재 위치를 알려주세요!",
+      question: `🍽️ 맞춤 음식을 추천해드리기 위해 배고픔 정도와 현재 위치를 알려주세요!${statsMessage}`,
       hungerLevels: [
         {
           level: 3,
@@ -98,10 +123,11 @@ export class IntegratedFoodAgentController {
       instruction: "배고픔 정도(1-3)와 위치를 함께 알려주세요.",
       examples: [
         "3, 대전",
-        "2, 강남구", 
+        "2, 강남구",
         "1, 홍대",
         "매우 배고픔, 서울"
-      ]
+      ],
+      todayStats: statsMessage
     };
   }
 
@@ -275,14 +301,51 @@ export class IntegratedFoodAgentController {
       console.log(`🔍 맛집 검색 완료: ${topCategories[0].nameKo} ${category1Result.total}개, ${topCategories[1].nameKo} ${category2Result.total}개`);
 
       // 4. 결과 포맷팅
-      const hungerDesc = request.hungerLevel === 3 ? "매우 배고픔" : 
+      const hungerDesc = request.hungerLevel === 3 ? "매우 배고픔" :
                         request.hungerLevel === 2 ? "보통" : "배부름";
-      const weatherDesc = weatherConditions.temperature === 'hot' ? '더운 날씨' : 
+      const weatherDesc = weatherConditions.temperature === 'hot' ? '더운 날씨' :
                          weatherConditions.temperature === 'cold' ? '추운 날씨' : '온화한 날씨';
 
-      const successMessage = `${searchLocation} 지역의 ${weatherDesc}와 현재 ${hungerDesc} 상태를 고려하여, ` +
-                            `**${topCategories[0].nameKo}**와 **${topCategories[1].nameKo}**를 추천드립니다! ` +
-                            `각 카테고리별 맛집 정보도 함께 확인해보세요.`;
+      // Markdown 포맷으로 풍부한 응답 생성
+      const formatRestaurant = (r: any, index: number) => {
+        const title = r.title.replace(/<[^>]*>/g, ''); // HTML 태그 제거
+        const phone = r.telephone || '정보없음';
+        return `${index + 1}. **${title}**\n   - 📍 ${r.address}\n   - 📞 ${phone}`;
+      };
+
+      const successMessage = `
+## 음식 추천 결과
+
+### 분석 정보
+- **지역**: ${searchLocation}
+- **날씨**: ${weatherDesc} (🌡️ ${weatherConditions.actualTemperature || 'N/A'}°C, 💧 ${weatherConditions.actualHumidity || 'N/A'}%)
+- **배고픔**: ${hungerDesc} (${request.hungerLevel}/3)
+- **요일**: ${this.getKoreanDay(currentDay)}
+
+---
+
+### 추천 카테고리 Top 2
+
+#### 🥇 1위: ${topCategories[0].nameKo}
+**선정 이유**: ${topCategories[0].reason}
+**점수**: ${topCategories[0].score.toFixed(1)}점
+
+**추천 맛집** (총 ${category1Result.total}곳)
+${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+
+---
+
+#### 🥈 2위: ${topCategories[1].nameKo}
+**선정 이유**: ${topCategories[1].reason}
+**점수**: ${topCategories[1].score.toFixed(1)}점
+
+**추천 맛집** (총 ${category2Result.total}곳)
+${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+
+---
+
+💡 **Tip**: 실제로 드신 음식을 나중에 알려주시면 더 정확한 추천을 해드릴 수 있어요!
+`.trim();
 
       return {
         success: true,
@@ -554,14 +617,51 @@ export class IntegratedFoodAgentController {
       console.log(`🔍 맛집 검색 완료: ${topCategories[0].nameKo} ${category1Result.total}개, ${topCategories[1].nameKo} ${category2Result.total}개`);
 
       // 4. 결과 포맷팅
-      const hungerDesc = request.hungerLevel === 3 ? "매우 배고픔" : 
+      const hungerDesc = request.hungerLevel === 3 ? "매우 배고픔" :
                         request.hungerLevel === 2 ? "보통" : "배부름";
-      const weatherDesc = weatherConditions.temperature === 'hot' ? '더운 날씨' : 
+      const weatherDesc = weatherConditions.temperature === 'hot' ? '더운 날씨' :
                          weatherConditions.temperature === 'cold' ? '추운 날씨' : '온화한 날씨';
 
-      const successMessage = `${searchLocation} 지역의 ${weatherDesc}와 현재 ${hungerDesc} 상태를 고려하여, ` +
-                            `**${topCategories[0].nameKo}**와 **${topCategories[1].nameKo}**를 추천드립니다! ` +
-                            `각 카테고리별 맛집 정보를 확인해보세요.`;
+      // Markdown 포맷으로 풍부한 응답 생성
+      const formatRestaurant = (r: any, index: number) => {
+        const title = r.title.replace(/<[^>]*>/g, ''); // HTML 태그 제거
+        const phone = r.telephone || '정보없음';
+        return `${index + 1}. **${title}**\n   - 📍 ${r.address}\n   - 📞 ${phone}`;
+      };
+
+      const successMessage = `
+## 🍽️ 음식 추천 결과
+
+### 📊 분석 정보
+- **지역**: ${searchLocation}
+- **날씨**: ${weatherDesc} (🌡️ ${weatherConditions.actualTemperature || 'N/A'}°C, 💧 ${weatherConditions.actualHumidity || 'N/A'}%)
+- **배고픔**: ${hungerDesc} (${request.hungerLevel}/3)
+- **요일**: ${this.getKoreanDay(currentDay)}
+
+---
+
+### 🎯 추천 카테고리 Top 2
+
+#### 🥇 1위: ${topCategories[0].nameKo}
+**선정 이유**: ${topCategories[0].reason}
+**점수**: ${topCategories[0].score.toFixed(1)}점
+
+**추천 맛집** (총 ${category1Result.total}곳)
+${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+
+---
+
+#### 🥈 2위: ${topCategories[1].nameKo}
+**선정 이유**: ${topCategories[1].reason}
+**점수**: ${topCategories[1].score.toFixed(1)}점
+
+**추천 맛집** (총 ${category2Result.total}곳)
+${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+
+---
+
+💡 **Tip**: 실제로 드신 음식을 나중에 알려주시면 더 정확한 추천을 해드릴 수 있어요!
+`.trim();
 
       return {
         success: true,
@@ -755,7 +855,7 @@ export class IntegratedFoodAgentController {
    * @hidden
    * @deprecated 이 메소드는 더 이상 사용하지 않습니다. askForFoodRecommendation을 사용하세요.
    */
-  private askForFullnessOnly(): {
+  private async askForFullnessOnly(): Promise<{
     question: string;
     fullnessOptions: Array<{
       level: FullnessLevel;
@@ -763,9 +863,9 @@ export class IntegratedFoodAgentController {
       emoji: string;
     }>;
     instruction: string;
-  } {
+  }> {
     // 새로운 통합 메소드로 리다이렉트
-    const newFormat = this.askForFoodRecommendation();
+    const newFormat = await this.askForFoodRecommendation();
     return {
       question: newFormat.question,
       fullnessOptions: newFormat.hungerLevels,
@@ -778,8 +878,246 @@ export class IntegratedFoodAgentController {
    * @hidden
    * @deprecated 이 메소드는 더 이상 사용하지 않습니다. askForFoodRecommendation을 사용하세요.
    */
-  private askForHungerAndLocation(): any {
-    return this.askForFoodRecommendation();
+  private async askForHungerAndLocation(): Promise<any> {
+    return await this.askForFoodRecommendation();
+  }
+
+  /**
+   * 특정 요일의 음식 선택 통계를 조회합니다.
+   *
+   * @description
+   * 사용자가 특정 요일에 과거에 선택했던 음식 카테고리 및 음식점의 통계를 보여줍니다.
+   * 요일을 지정하지 않으면 오늘 요일의 통계를 보여줍니다.
+   *
+   * @example
+   * 사용자: "월요일에 내가 주로 뭐 먹었어?"
+   * 사용자: "화요일 통계 보여줘"
+   * 사용자: "내 선택 통계 보여줘" (오늘 요일)
+   */
+  public async getTodayFoodStatistics(input: {
+    /**
+     * 조회할 요일 (선택사항)
+     * 예: "월요일", "화요일", "Monday", "Tuesday" 등
+     * 지정하지 않으면 오늘 요일
+     */
+    dayOfWeek?: string;
+  } = {}): Promise<{
+    success: boolean;
+    message: string;
+    data?: {
+      day: string;
+      dayKo: string;
+      totalSelections: number;
+      topSelections: Array<{
+        category: string;
+        count: number;
+        percentage: number;
+      }>;
+    };
+  }> {
+    try {
+      const userHistoryService = new UserHistoryService();
+
+      // 요일 파싱 (한글 → 영어 변환)
+      let targetDay: string | undefined = undefined;
+      if (input?.dayOfWeek) {
+        targetDay = this.parseDayOfWeek(input.dayOfWeek);
+      }
+
+      const stats = await userHistoryService.getDaySelectionStats(targetDay);
+
+      if (stats.totalSelections === 0) {
+        return {
+          success: true,
+          message: `아직 ${stats.dayKo}에 선택하신 음식 기록이 없습니다. 추천을 받고 실제로 드신 음식을 알려주시면 통계가 쌓여요!`,
+          data: stats
+        };
+      }
+
+      // Markdown 포맷으로 통계 메시지 생성
+      const medalEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+      const statsLines = stats.topSelections.map((item, index) => {
+        let line = `${medalEmojis[index]} **${item.category}** - ${item.count}번 (${item.percentage}%)`;
+
+        // 자주 방문한 음식점 정보 추가
+        if (item.restaurants.length > 0) {
+          const restaurantList = item.restaurants.map(r => `${r.name} (${r.count}번)`).join(', ');
+          line += `\n   - 자주 방문: ${restaurantList}`;
+        }
+
+        return line;
+      }).join('\n\n');
+
+      const message = `
+## 📊 ${stats.dayKo} 음식 선택 통계
+
+지금까지 **${stats.dayKo}**에 총 **${stats.totalSelections}번** 음식을 선택하셨네요!
+
+### 선택 Top ${stats.topSelections.length}
+${statsLines}
+
+이 정보를 참고해서 새로운 추천을 받아보세요! 🍽️
+`.trim();
+
+      return {
+        success: true,
+        message,
+        data: stats
+      };
+
+    } catch (error) {
+      console.error("❌ 통계 조회 중 오류:", error);
+      return {
+        success: false,
+        message: "통계를 불러오는 중 오류가 발생했습니다."
+      };
+    }
+  }
+
+  /**
+   * 사용자가 실제로 선택한 음식을 히스토리에 저장합니다.
+   *
+   * @description
+   * 추천 후 사용자가 실제로 선택한 음식/맛집을 히스토리에 저장하여
+   * 향후 더 정확한 추천을 제공합니다.
+   *
+   * @example
+   * 사용자: "아까 추천받은 거 치킨 먹었어"
+   * 사용자: "한식 골랐어요"
+   * 사용자: "교촌치킨 대전 둔산점에서 먹었어"
+   */
+  public async confirmUserSelection(input: {
+    /**
+     * 실제로 선택한 음식 카테고리 또는 맛집 이름
+     * 예: "치킨", "한식", "교촌치킨", "신전떡볶이"
+     */
+    selectedFood: string;
+
+    /**
+     * 선택한 음식이 속한 카테고리 (선택사항)
+     * AI가 자동으로 추론 가능
+     */
+    category?: string;
+
+    /**
+     * 실제로 방문한 음식점 이름 (선택사항)
+     * 예: "교촌치킨 대전 둔산점", "홍콩반점 강남점"
+     */
+    restaurantName?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    try {
+      const userHistoryService = new UserHistoryService();
+
+      // 음식 이름에서 카테고리 자동 매칭 (category가 없는 경우)
+      let finalCategory = input.category;
+      if (!finalCategory) {
+        finalCategory = this.matchFoodCategory(input.selectedFood);
+      }
+
+      // 히스토리에 저장
+      await userHistoryService.saveUserSelection({
+        selectedFood: input.selectedFood,
+        category: finalCategory,
+        restaurantName: input.restaurantName
+      });
+
+      const restaurantPart = input.restaurantName ? ` (${input.restaurantName})` : '';
+      return {
+        success: true,
+        message: `${input.selectedFood}${restaurantPart} 선택을 기록했습니다! 다음 추천 때 이 정보를 활용할게요 😊`
+      };
+
+    } catch (error) {
+      console.error("❌ 사용자 선택 저장 중 오류:", error);
+      return {
+        success: false,
+        message: "선택 저장 중 오류가 발생했습니다. 다시 시도해주세요."
+      };
+    }
+  }
+
+  /**
+   * 음식 이름에서 카테고리를 추론합니다.
+   */
+  private matchFoodCategory(foodName: string): string | undefined {
+    const lowerFood = foodName.toLowerCase();
+
+    // FOOD_CATEGORIES를 순회하며 키워드 매칭
+    for (const category of FOOD_CATEGORIES) {
+      if (
+        lowerFood.includes(category.nameKo.toLowerCase()) ||
+        lowerFood.includes(category.name.toLowerCase())
+      ) {
+        return category.nameKo;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * 요일 문자열을 파싱하여 영어 요일명으로 변환합니다.
+   *
+   * @param dayString 요일 문자열 (예: "월요일", "화요일", "Monday", "Tuesday")
+   * @returns 영어 요일명 (예: "Monday", "Tuesday") 또는 undefined
+   */
+  private parseDayOfWeek(dayString: string): string | undefined {
+    const lowerDay = dayString.toLowerCase().trim();
+
+    // 한글 요일 매핑
+    const koreanDayMap: { [key: string]: string } = {
+      "일요일": "Sunday",
+      "월요일": "Monday",
+      "화요일": "Tuesday",
+      "수요일": "Wednesday",
+      "목요일": "Thursday",
+      "금요일": "Friday",
+      "토요일": "Saturday",
+      "일": "Sunday",
+      "월": "Monday",
+      "화": "Tuesday",
+      "수": "Wednesday",
+      "목": "Thursday",
+      "금": "Friday",
+      "토": "Saturday"
+    };
+
+    // 영어 요일 매핑 (소문자)
+    const englishDayMap: { [key: string]: string } = {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday"
+    };
+
+    // 한글 매핑 시도
+    for (const [korKey, engValue] of Object.entries(koreanDayMap)) {
+      if (dayString.includes(korKey)) {
+        return engValue;
+      }
+    }
+
+    // 영어 매핑 시도
+    if (englishDayMap[lowerDay]) {
+      return englishDayMap[lowerDay];
+    }
+
+    // 매칭 실패 시 undefined 반환
+    console.warn(`요일 파싱 실패: "${dayString}"`);
+    return undefined;
   }
 
 }
