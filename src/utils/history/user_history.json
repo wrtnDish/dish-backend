@@ -34,5 +34,9 @@
   {
     "chat": "{\"content\":\"수요일 자주 먹은게 머야?\",\"location\":{\"latitude\":36.35191760898685,\"longitude\":127.30148091970315,\"accuracy\":35,\"timestamp\":1760943479458}}",
     "day": "Monday"
+  },
+  {
+    "chat": "{\"content\":\"내 위치 알려줘.\",\"location\":{\"latitude\":36.35189368558888,\"longitude\":127.30150603982871,\"accuracy\":35,\"timestamp\":1760944995955}}",
+    "day": "Monday"
   }
 ]

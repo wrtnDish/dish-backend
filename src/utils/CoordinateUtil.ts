@@ -1,4 +1,5 @@
-import { ILatLng, IGrid } from "../api/structures/weather/IWeatherForecast";
+import { IGrid, ILatLng } from "../api/structures/weather/IWeatherForecast";
+
 
 /**
  * Lambert Conformal Conic Projection 파라미터

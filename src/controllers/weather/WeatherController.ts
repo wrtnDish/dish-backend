@@ -1,14 +1,12 @@
 import { TypedBody, TypedRoute } from "@nestia/core";
 import { Controller } from "@nestjs/common";
-import { 
-  IWeatherForecastRequest, 
-  IWeatherForecastResponse,
-  ISimpleWeatherResponse,
-  ILatLng,
-  IGrid
-} from "../../api/structures/weather/IWeatherForecast";
+
+
+
+import { IGrid, ILatLng, ISimpleWeatherResponse, IWeatherForecastRequest, IWeatherForecastResponse } from "../../api/structures/weather/IWeatherForecast";
 import { WeatherService } from "../../services/WeatherService";
-import { convertLatLngToGrid, convertGridToLatLng } from "../../utils/CoordinateUtil";
+import { convertGridToLatLng, convertLatLngToGrid } from "../../utils/CoordinateUtil";
+
 
 /**
  * 기상청 날씨 예보 API 컨트롤러

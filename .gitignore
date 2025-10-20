@@ -2,6 +2,7 @@
 .idea
 .tool-versions
 .env
+.DS_Store
 
 bin/
 dist/

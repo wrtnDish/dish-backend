@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
-import { FoodController } from "./FoodController";
+
 import { FoodService } from "../../services/FoodService";
+import { FoodController } from "./FoodController";
 
 @Module({
   controllers: [FoodController],

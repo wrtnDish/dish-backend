@@ -1,5 +1,5 @@
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { promises as fs } from "fs";
+import { join } from "path";
 
 interface QuestionLogEntry {
   chat: string;
@@ -7,12 +7,19 @@ interface QuestionLogEntry {
 }
 
 export namespace QuestionLogUtil {
-
-  const LOG_DIR = join(process.cwd(), 'src', 'utils','history');
-  const QUESTIONS_FILE = join(LOG_DIR, 'user_history.json');
+  const LOG_DIR = join(process.cwd(), "src", "utils", "history");
+  const QUESTIONS_FILE = join(LOG_DIR, "user_history.json");
 
   const getKoreanDayOfWeek = (): string => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
     const today = new Date();
     return days[today.getDay()];
   };
@@ -20,7 +27,7 @@ export namespace QuestionLogUtil {
   // 기존 질문 로그들 읽어오기
   export const readQuestionLogs = async (): Promise<QuestionLogEntry[]> => {
     try {
-      const data = await fs.readFile(QUESTIONS_FILE, 'utf-8');
+      const data = await fs.readFile(QUESTIONS_FILE, "utf-8");
       return JSON.parse(data);
     } catch (error) {
       return [];
@@ -34,22 +41,27 @@ export namespace QuestionLogUtil {
 
       const newEntry: QuestionLogEntry = {
         chat: userQuestion,
-        day: getKoreanDayOfWeek()
+        day: getKoreanDayOfWeek(),
       };
 
       existingLogs.push(newEntry);
 
-      await fs.writeFile(QUESTIONS_FILE, JSON.stringify(existingLogs, null, 2), 'utf-8');
-
+      await fs.writeFile(
+        QUESTIONS_FILE,
+        JSON.stringify(existingLogs, null, 2),
+        "utf-8",
+      );
     } catch (error) {
       throw error;
     }
   };
 
   // 특정 요일의 질문들만 조회
-  export const getQuestionsByDay = async (dayOfWeek: string): Promise<QuestionLogEntry[]> => {
+  export const getQuestionsByDay = async (
+    dayOfWeek: string,
+  ): Promise<QuestionLogEntry[]> => {
     const allLogs = await readQuestionLogs();
-    return allLogs.filter(log => log.day === dayOfWeek);
+    return allLogs.filter((log) => log.day === dayOfWeek);
   };
 
   // 전체 질문 개수 조회

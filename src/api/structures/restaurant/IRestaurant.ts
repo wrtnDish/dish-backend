@@ -1,5 +1,6 @@
 import { tags } from "typia";
 
+
 /**
  * Restaurant search API - SIMPLIFIED
  */
@@ -26,4 +27,4 @@ export namespace IRestaurant {
      */
     display?: number & tags.Type<"uint32"> & tags.Minimum<1> & tags.Maximum<20>;
   }
-} 
+}

@@ -1,5 +1,6 @@
 import { tags } from "typia";
 
+
 /**
  * 음식 제공 온도 타입
  * @description 음식이 제공되는 온도 형태

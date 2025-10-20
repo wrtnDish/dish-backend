@@ -1,20 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { 
-  ILatLng, 
-  IGrid, 
-  IWeatherForecastRequest, 
-  IWeatherForecastResponse, 
-  IWeatherForecastRawItem,
-  IHourlyWeather,
-  ISimpleWeatherResponse,
-  WeatherCategory,
-  SkyCondition,
-  PrecipitationType,
-  IWeatherApiError
-} from "../api/structures/weather/IWeatherForecast";
+
+
+
+import { MyGlobal } from "../MyGlobal";
+import { IGrid, IHourlyWeather, ILatLng, ISimpleWeatherResponse, IWeatherForecastRawItem, IWeatherForecastRequest, IWeatherForecastResponse, PrecipitationType, SkyCondition, WeatherCategory } from "../api/structures/weather/IWeatherForecast";
 import { convertLatLngToGrid } from "../utils/CoordinateUtil";
 import { WeatherErrorUtil } from "../utils/WeatherErrorUtil";
-import { MyGlobal } from "../MyGlobal";
+
 
 /**
  * 기상청 날씨 예보 서비스

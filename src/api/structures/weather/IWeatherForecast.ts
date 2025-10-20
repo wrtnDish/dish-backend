@@ -1,5 +1,6 @@
 import { tags } from "typia";
 
+
 /**
  * 위경도 좌표 정보
  * @description 위도와 경도를 나타내는 인터페이스

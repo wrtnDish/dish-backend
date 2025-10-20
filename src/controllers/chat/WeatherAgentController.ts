@@ -1,42 +1,65 @@
-import { 
-  ILatLng, 
-  IWeatherForecastRequest, 
-  IWeatherForecastResponse 
-} from "../../api/structures/weather/IWeatherForecast";
+import { ICurrentLocationWeatherResponse, ILocationRequest } from "../../api/structures/location/ILocation";
+import { IWeatherForecastRequest, IWeatherForecastResponse } from "../../api/structures/weather/IWeatherForecast";
+import { LocationService } from "../../services/LocationService";
 import { WeatherService } from "../../services/WeatherService";
-import { convertLatLngToGrid, convertGridToLatLng } from "../../utils/CoordinateUtil";
+import { convertGridToLatLng, convertLatLngToGrid } from "../../utils/CoordinateUtil";
+
 
 /**
- * AI 에이전트가 사용할 수 있는 날씨 기능 컨트롤러
+ * AI 에이전트가 사용할 수 있는 날씨 및 위치 기능 컨트롤러
  * 
  * @description
  * 이 클래스는 Agentica AI 에이전트가 LLM Function Calling을 통해
- * 날씨 관련 기능을 사용할 수 있도록 제공하는 컨트롤러입니다.
+ * 날씨 관련 기능과 위치 조회 기능을 사용할 수 있도록 제공하는 컨트롤러입니다.
  * 
  * AI 모델이 사용자의 자연어 요청을 분석하여 적절한 함수를 호출하고,
- * 실시간 날씨 정보를 제공할 수 있습니다.
+ * 실시간 날씨 정보나 위치 정보를 제공할 수 있습니다.
  * 
- * 지원하는 기능:
+ * **기능 분류:**
+ * 
+ * **위치 조회 전용 기능:**
+ * - getCurrentLocation(): 순수 위치 정보만 조회 ("내 위치 알려줘", "현재 위치가 어디야?")
+ * 
+ * **날씨 조회 전용 기능:**
  * - 위경도 기반 날씨 조회
  * - 지역명을 통한 날씨 조회 (좌표 변환 포함)
- * - 좌표 변환 기능
+ * - 현재 위치 기반 날씨 조회 (GPS, 도시명, 주소 등)
+ * - 간단한 날씨 요약 조회
  * - 날씨 정보 해석 및 설명
+ * 
+ * **좌표 변환 기능:**
+ * - 위경도 ↔ 격자 좌표 변환
+ * 
+ * **AI 함수 호출 가이드:**
+ * 
+ * | 사용자 질문 예시 | 사용할 함수 | 목적 |
+ * |-----------------|------------|------|
+ * | "내 위치 알려줘", "현재 위치가 어디야?" | getCurrentLocation() | 위치 정보만 조회 |
+ * | "현재 위치 날씨 알려줘", "내 위치 날씨 어때?" | getCurrentLocationWeather() | 위치+날씨 통합 조회 |
+ * | "서울 날씨 어때?", "부산 날씨 알려줘" | getMyLocationWeather() | 특정 지역 날씨 조회 |
+ * | "지금 날씨 어때?", "오늘 날씨는?" | getQuickCurrentWeather() | 간단한 날씨 조회 |
+ * | 위경도 좌표가 있는 경우 | getWeatherByCoordinates() | 정확한 좌표 기반 날씨 |
  * 
  * @example
  * ```typescript
- * // AI 모델이 이런 식으로 함수를 호출할 수 있습니다:
+ * // AI 모델 함수 호출 예시:
  * 
- * // 사용자: "서울 날씨 알려줘"
- * const weather = await getWeatherByLocation({
- *   location: "서울시청",
- *   latitude: 37.5663,
- *   longitude: 126.9779
+ * // 사용자: "내 위치 알려줘" → 위치 정보만 필요
+ * const location = await getCurrentLocation({
+ *   locationMethod: "city",
+ *   cityName: "서울"
  * });
  * 
- * // 사용자: "부산 비올까?"
- * const weather = await getWeatherByCoordinates({
- *   lat: 35.1796,
- *   lng: 129.0756
+ * // 사용자: "서울 날씨 알려줘" → 날씨 정보 필요
+ * const weather = await getMyLocationWeather({
+ *   location: "서울",
+ *   includeDetails: true
+ * });
+ * 
+ * // 사용자: "현재 위치 날씨 어때?" → 위치+날씨 통합
+ * const locationWeather = await getCurrentLocationWeather({
+ *   locationMethod: "gps",
+ *   coordinates: { lat: 37.5663, lng: 126.9779 }
  * });
  * ```
  */
@@ -47,8 +70,15 @@ export class WeatherAgentController {
    */
   private readonly weatherService: WeatherService;
 
+  /**
+   * 위치 서비스 인스턴스
+   * @description LocationService를 통해 다양한 방법으로 위치 파악
+   */
+  private readonly locationService: LocationService;
+
   constructor() {
     this.weatherService = new WeatherService();
+    this.locationService = new LocationService();
   }
 
   /**
@@ -357,6 +387,407 @@ export class WeatherAgentController {
       y: grid.y,
     });
     return { lat: latlng.lat, lng: latlng.lng };
+  }
+
+  /**
+   * 현재 위치 정보 조회 (위치 전용)
+   * 
+   * @description
+   * 사용자의 현재 위치 정보만 조회하여 반환합니다. 날씨 정보는 포함하지 않습니다.
+   * "내 위치 알려줘", "현재 위치가 어디야?", "지금 어디에 있어?" 같은 순수 위치 질문에 사용됩니다.
+   * GPS, 도시명, 주소 등 다양한 방법으로 위치를 파악할 수 있습니다.
+   * 
+   * @param params - 현재 위치 조회 요청 정보
+   * @param params.locationMethod - 위치 파악 방법 ("gps", "city", "address")
+   * @param params.coordinates - GPS 좌표 (locationMethod가 "gps"인 경우)
+   * @param params.cityName - 도시명 (locationMethod가 "city"인 경우)
+   * @param params.address - 주소 (locationMethod가 "address"인 경우)
+   * 
+   * @returns 현재 위치 정보 (날씨 정보 제외)
+   * 
+   * @example
+   * ```typescript
+   * // GPS 좌표로 현재 위치 조회
+   * const location = await getCurrentLocation({
+   *   locationMethod: "gps",
+   *   coordinates: { lat: 37.5663, lng: 126.9779 }
+   * });
+   * 
+   * // 도시명으로 현재 위치 조회
+   * const location = await getCurrentLocation({
+   *   locationMethod: "city",
+   *   cityName: "서울"
+   * });
+   * ```
+   */
+  public async getCurrentLocation(params: {
+    /**
+     * 위치 파악 방법
+     * @description "gps": GPS 좌표 사용, "city": 도시명 검색, "address": 주소 분석
+     */
+    locationMethod: "gps" | "city" | "address";
+    
+    /**
+     * GPS 좌표 (locationMethod가 "gps"인 경우 필수)
+     */
+    coordinates?: { lat: number; lng: number };
+    
+    /**
+     * 도시명 (locationMethod가 "city"인 경우 필수)
+     */
+    cityName?: string;
+    
+    /**
+     * 주소 (locationMethod가 "address"인 경우 필수)
+     */
+    address?: string;
+  }): Promise<{
+    /**
+     * 위치 좌표
+     */
+    coordinates: { lat: number; lng: number };
+    
+    /**
+     * 위치 정보
+     */
+    locationInfo: {
+      city: string;
+      district?: string;
+      address: string;
+      description: string;
+    };
+    
+    /**
+     * 조회 메타데이터
+     */
+    metadata: {
+      success: boolean;
+      message: string;
+      method: string;
+    };
+  }> {
+    const startTime = new Date();
+    
+    try {
+      // 위치 정보 요청 객체 생성
+      const locationRequest: ILocationRequest = {
+        method: params.locationMethod,
+        coordinates: params.coordinates,
+        cityName: params.cityName,
+        address: params.address
+      };
+
+      // 위치 정보 조회
+      const locationInfo = await this.locationService.getLocation(locationRequest);
+      
+      // 위치 정보만 반환 (날씨 정보 제외)
+      return {
+        coordinates: locationInfo.coordinates,
+        locationInfo: {
+          city: locationInfo.locationInfo.city,
+          district: locationInfo.locationInfo.district,
+          address: locationInfo.locationInfo.address || `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ""}`,
+          description: locationInfo.locationInfo.description || "위치 정보 조회 완료"
+        },
+        metadata: {
+          success: true,
+          message: `${locationInfo.locationInfo.city}의 위치 정보를 성공적으로 조회했습니다.`,
+          method: params.locationMethod
+        }
+      };
+
+    } catch (error) {
+      throw new Error(`현재 위치 조회에 실패했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
+    }
+  }
+
+  /**
+   * 현재 위치 날씨 조회 (종합) - 날씨 정보 전용
+   * 
+   * @description
+   * 사용자의 현재 위치의 날씨 정보를 조회하여 제공합니다. 위치 파악 + 날씨 조회를 통합적으로 처리합니다.
+   * "현재 위치 날씨 알려줘", "내 위치 날씨 어때?", "지금 있는 곳 날씨는?" 같은 날씨 요청에 사용됩니다.
+   * 순수 위치 정보만 원하는 경우에는 getCurrentLocation() 함수를 사용하세요.
+   * 
+   * @param params - 현재 위치 날씨 요청 정보
+   * @param params.locationMethod - 위치 파악 방법 ("gps", "city", "address")
+   * @param params.coordinates - GPS 좌표 (locationMethod가 "gps"인 경우)
+   * @param params.cityName - 도시명 (locationMethod가 "city"인 경우)
+   * @param params.address - 주소 (locationMethod가 "address"인 경우)
+   * @param params.includeAnalysis - 날씨 분석 및 조언 포함 여부 (기본값: true)
+   * 
+   * @returns 현재 위치와 날씨 정보
+   * 
+   * @example
+   * ```typescript
+   * // GPS 좌표로 현재 위치 날씨 조회
+   * const weather = await getCurrentLocationWeather({
+   *   locationMethod: "gps",
+   *   coordinates: { lat: 37.5663, lng: 126.9779 },
+   *   includeAnalysis: true
+   * });
+   * 
+   * // 도시명으로 현재 위치 날씨 조회
+   * const weather = await getCurrentLocationWeather({
+   *   locationMethod: "city",
+   *   cityName: "서울"
+   * });
+   * 
+   * ```
+   */
+  public async getCurrentLocationWeather(params: {
+    /**
+     * 위치 파악 방법
+     * @description "gps": GPS 좌표 사용, "city": 도시명 검색, "address": 주소 분석
+     */
+    locationMethod: "gps" | "city" | "address";
+    
+    /**
+     * GPS 좌표 (locationMethod가 "gps"인 경우 필수)
+     */
+    coordinates?: { lat: number; lng: number };
+    
+    /**
+     * 도시명 (locationMethod가 "city"인 경우 필수)
+     */
+    cityName?: string;
+    
+    /**
+     * 주소 (locationMethod가 "address"인 경우 필수)
+     */
+    address?: string;
+    
+    
+    /**
+     * 날씨 분석 및 조언 포함 여부
+     * @default true
+     */
+    includeAnalysis?: boolean;
+  }): Promise<ICurrentLocationWeatherResponse> {
+    const startTime = new Date();
+    
+    try {
+      // 1. 위치 정보 요청 객체 생성
+      const locationRequest: ILocationRequest = {
+        method: params.locationMethod,
+        coordinates: params.coordinates,
+        cityName: params.cityName,
+        address: params.address
+      };
+
+      // 2. 위치 정보 조회
+      const locationInfo = await this.locationService.getLocation(locationRequest);
+      
+      // 3. 해당 위치의 날씨 정보 조회
+      const weatherData = await this.getSimpleWeatherSummary(locationInfo.coordinates);
+      
+      // 4. 날씨 분석 (요청된 경우)
+      let analysisData = undefined;
+      if (params.includeAnalysis !== false) {
+        analysisData = await this.analyzeWeatherConditions(locationInfo.coordinates);
+      }
+
+      // 5. 응답 데이터 구성
+      const response: ICurrentLocationWeatherResponse = {
+        location: locationInfo,
+        currentWeather: {
+          summary: weatherData.current,
+          temperature: weatherData.temperature.current,
+          sky: weatherData.sky.description,
+          precipitation: weatherData.precipitation.status,
+          humidity: null // 간단한 요약에서는 습도 제외
+        },
+        analysis: analysisData,
+        metadata: {
+          success: true,
+          processingTime: (new Date().getTime() - startTime.getTime()).toString() + "ms",
+          message: `${locationInfo.locationInfo.city}의 현재 날씨 정보를 성공적으로 조회했습니다.`
+        }
+      };
+
+      return response;
+
+    } catch (error) {
+      // 에러 발생 시 기본 응답 반환
+      throw new Error(`현재 위치 날씨 조회에 실패했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
+    }
+  }
+
+  /**
+   * 간단한 날씨 정보 조회 (날씨 전용)
+   * 
+   * @description
+   * 사용자가 빠른 날씨 정보만 원할 때 사용하는 함수입니다.
+   * "지금 날씨 어때?", "오늘 날씨는?", "날씨 알려줘" 같은 날씨 요청에 적합합니다.
+   * 위치 정보는 이미 알고 있다고 가정하고, 날씨 정보만 간단히 제공합니다.
+   * 위치 정보만 원하는 경우에는 getCurrentLocation() 함수를 사용하세요.
+   * 
+   * @param locationMethod - 위치 파악 방법
+   * @param locationData - 위치 데이터 (방법에 따라 다름)
+   * 
+   * @returns 간단한 현재 날씨 정보
+   * 
+   * @example
+   * ```typescript
+   * // 도시명으로 간단한 날씨 조회
+   * const summary = await getQuickCurrentWeather({
+   *   locationMethod: "city", 
+   *   locationData: "서울"
+   * });
+   * // 결과: "서울 현재 날씨: 맑음, 23°C"
+   * 
+   * // GPS로 간단한 날씨 조회
+   * const summary = await getQuickCurrentWeather({
+   *   locationMethod: "gps", 
+   *   locationData: { lat: 37.5663, lng: 126.9779 }
+   * });
+   * ```
+   */
+  public async getQuickCurrentWeather(params: {
+    /**
+     * 위치 파악 방법
+     */
+    locationMethod: "gps" | "city";
+    
+    /**
+     * 위치 데이터 (방법에 따라 다름)
+     * - gps: { lat: number, lng: number }
+     * - city: string (도시명)
+     */
+    locationData: any;
+  }): Promise<{
+    /**
+     * 한 줄 날씨 요약
+     * @example "서울 현재 날씨: 맑음, 23°C, 습도 60%"
+     */
+    summary: string;
+    
+    /**
+     * 위치 정보
+     */
+    location: string;
+    
+    /**
+     * 기온
+     */
+    temperature: number | null;
+    
+    /**
+     * 날씨 상태
+     */
+    condition: string | null;
+  }> {
+    // 위치 파악
+    let locationRequest: ILocationRequest;
+    
+    if (params.locationMethod === "gps") {
+      locationRequest = {
+        method: "gps",
+        coordinates: params.locationData
+      };
+    } else if (params.locationMethod === "city") {
+      locationRequest = {
+        method: "city",
+        cityName: params.locationData
+      };
+    } else {
+      throw new Error(`지원하지 않는 위치 파악 방법입니다: ${params.locationMethod}`);
+    }
+
+    const locationInfo = await this.locationService.getLocation(locationRequest);
+    const weatherInfo = await this.getSimpleWeatherSummary(locationInfo.coordinates);
+    
+    return {
+      summary: `${locationInfo.locationInfo.city} 현재 날씨: ${weatherInfo.current}`,
+      location: locationInfo.locationInfo.city,
+      temperature: weatherInfo.temperature.current,
+      condition: weatherInfo.sky.description
+    };
+  }
+
+  /**
+   * 특정 지역 날씨 조회 (날씨 전용)
+   * 
+   * @description
+   * 사용자가 특정 지역의 날씨 정보를 요청할 때 사용하는 함수입니다.
+   * "서울 날씨 어때?", "부산 날씨 알려줘", "우리 동네 날씨는?" 등의 날씨 요청에 적합합니다.
+   * 도시명이나 구/군명을 기반으로 해당 지역의 날씨 정보를 제공합니다.
+   * 위치 정보만 원하는 경우에는 getCurrentLocation() 함수를 사용하세요.
+   * 
+   * @param location - 날씨를 조회할 지역 (도시명 또는 구/군명)
+   * @param includeDetails - 상세 날씨 정보 포함 여부
+   * 
+   * @returns 해당 지역의 날씨 정보
+   * 
+   * @example
+   * ```typescript
+   * // 도시명으로 내 위치 날씨 조회
+   * const weather = await getMyLocationWeather({
+   *   location: "강남구",
+   *   includeDetails: true
+   * });
+   * 
+   * // 도시명으로 간단한 날씨만 조회  
+   * const weather = await getMyLocationWeather({
+   *   location: "부산",
+   *   includeDetails: false
+   * });
+   * ```
+   */
+  public async getMyLocationWeather(params: {
+    /**
+     * 사용자의 거주지역 (도시명 또는 구/군명)
+     */
+    location: string;
+    
+    /**
+     * 상세 정보 포함 여부
+     * @default true
+     */
+    includeDetails?: boolean;
+  }): Promise<{
+    /**
+     * 위치 정보
+     */
+    locationName: string;
+    
+    /**
+     * 현재 날씨 요약
+     */
+    currentWeather: string;
+    
+    /**
+     * 상세 날씨 정보 (includeDetails가 true인 경우)
+     */
+    details?: any;
+    
+    /**
+     * 날씨 조언 (includeDetails가 true인 경우)
+     */
+    advice?: string;
+  }> {
+    const locationRequest: ILocationRequest = {
+      method: "city",
+      cityName: params.location
+    };
+
+    const locationInfo = await this.locationService.getLocation(locationRequest);
+    const weatherSummary = await this.getSimpleWeatherSummary(locationInfo.coordinates);
+    
+    const result: any = {
+      locationName: `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ""}`,
+      currentWeather: weatherSummary.current
+    };
+
+    if (params.includeDetails !== false) {
+      const fullWeather = await this.getWeatherByCoordinates(locationInfo.coordinates);
+      const analysis = await this.analyzeWeatherConditions(locationInfo.coordinates);
+      
+      result.details = fullWeather;
+      result.advice = analysis.advice;
+    }
+
+    return result;
   }
 
   /**

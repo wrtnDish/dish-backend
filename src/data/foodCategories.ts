@@ -1,5 +1,6 @@
 import { IFoodCategory } from "../api/structures/food/IFoodCategory";
 
+
 /**
  * 음식 카테고리 마스터 데이터
  * @description 날씨 기반 음식 추천을 위한 기본 카테고리 정보

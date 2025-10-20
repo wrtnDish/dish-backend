@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { IFoodCategory, IWeatherConditions, IScoredFoodCategory, WeatherHumidity, ServeTemperature } from "../api/structures/food/IFoodCategory";
+
+
+
+import { IFoodCategory, IScoredFoodCategory, IWeatherConditions, ServeTemperature, WeatherHumidity } from "../api/structures/food/IFoodCategory";
 import { FOOD_CATEGORIES } from "../data/foodCategories";
+
 
 /**
  * 습도-제공온도 점수 매트릭스 타입
