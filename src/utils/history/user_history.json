@@ -38,5 +38,29 @@
   {
     "chat": "{\"content\":\"내 위치 알려줘.\",\"location\":{\"latitude\":36.35189368558888,\"longitude\":127.30150603982871,\"accuracy\":35,\"timestamp\":1760944995955}}",
     "day": "Monday"
+  },
+  {
+    "chat": "{\"content\":\"현재 위치 어디야?\",\"location\":{\"latitude\":36.35192810409716,\"longitude\":127.30148790529621,\"accuracy\":35,\"timestamp\":1761005112869}}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"content\":\"현재 위치 날씨 알려줘\",\"location\":{\"latitude\":36.35192810409716,\"longitude\":127.30148790529621,\"accuracy\":35,\"timestamp\":1761005112869}}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"content\":\"주변 맛집 추천해줘\",\"location\":{\"latitude\":36.35192810409716,\"longitude\":127.30148790529621,\"accuracy\":35,\"timestamp\":1761005112869}}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"content\":\"주변 맛집 알려줘\",\"location\":{\"latitude\":36.35190610611112,\"longitude\":127.30149084482802,\"accuracy\":35,\"timestamp\":1761006060924}}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"content\":\"주변 한식 맛집 알려줘\",\"location\":{\"latitude\":36.35190610611112,\"longitude\":127.30149084482802,\"accuracy\":35,\"timestamp\":1761006060924}}",
+    "day": "Tuesday"
+  },
+  {
+    "chat": "{\"content\":\"주변 치킨 맛집 알려줘\",\"location\":{\"latitude\":36.35190610611112,\"longitude\":127.30149084482802,\"accuracy\":35,\"timestamp\":1761006060924}}",
+    "day": "Tuesday"
   }
 ]
