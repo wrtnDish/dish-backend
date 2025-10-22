@@ -127,18 +127,74 @@ export class LocationService {
 
   /**
    * 도시명을 통한 위치 확인
-   * 
+   *
    * @description
    * 사용자가 입력한 도시명을 검색하여 해당 도시의 대표 좌표를 반환합니다.
    * 구/군명까지 포함하여 검색할 수 있습니다.
-   * 
-   * @param cityName - 도시명 또는 구/군명
+   *
+   * **복합 지역명 처리:**
+   * - "서울 성수", "대전 한밭대" 같은 형태를 파싱하여 처리
+   * - 정확한 매칭이 없으면 원본 텍스트를 그대로 사용 (success = false)
+   *
+   * @param cityName - 도시명 또는 구/군명 또는 "도시명 + 지역명"
    * @returns 위치 정보
    */
   private async getLocationByCity(cityName: string): Promise<ILocationResponse> {
     if (!cityName || cityName.trim().length === 0) {
       throw new Error("도시명이 입력되지 않았습니다.");
     }
+
+    // 복합 지역명 처리 (예: "서울 성수", "대전 한밭대")
+    if (cityName.includes(' ')) {
+      const parts = cityName.split(' ').map(p => p.trim()).filter(p => p.length > 0);
+
+      if (parts.length >= 2) {
+        const cityPart = parts[0]; // 도시명
+        const districtPart = parts.slice(1).join(' '); // 나머지 지역명
+
+        console.log(`📍 복합 지역명 파싱: 도시="${cityPart}", 지역="${districtPart}"`);
+
+        // 1. 도시 찾기
+        const city = findCityByName(cityPart);
+
+        if (city) {
+          // 2. 해당 도시의 구/군에서 지역 검색
+          if (city.districts) {
+            const district = city.districts.find(d =>
+              d.name.toLowerCase().includes(districtPart.toLowerCase()) ||
+              districtPart.toLowerCase().includes(d.name.toLowerCase())
+            );
+
+            if (district) {
+              console.log(`✅ 정확한 구/군 매칭: ${city.name} ${district.name}`);
+              return {
+                coordinates: district.coordinates,
+                method: "city",
+                locationInfo: {
+                  city: city.name,
+                  district: district.name,
+                  address: `${city.name} ${district.name}`,
+                  accuracy: 4,
+                  description: `복합 지역명 검색 결과`
+                },
+                metadata: {
+                  success: true,
+                  requestTime: new Date().toISOString(),
+                  message: `'${cityName}'에 대한 위치를 찾았습니다.`,
+                  source: "city_database"
+                }
+              };
+            }
+          }
+
+          // 3. 구/군 매칭 실패 - 원본 텍스트 사용 권장
+          console.log(`⚠️ "${districtPart}"에 해당하는 구/군을 찾지 못함 - 원본 텍스트 사용 권장`);
+          throw new Error(`'${cityName}'의 구체적 지역을 찾을 수 없습니다. 원본 텍스트를 사용하세요.`);
+        }
+      }
+    }
+
+    // 단일 지역명 처리 (기존 로직)
 
     // 먼저 구/군명으로 검색
     const districtResult = findDistrictByName(cityName);
