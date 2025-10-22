@@ -40,7 +40,31 @@ export const CITY_COORDINATES: ICityCoordinates[] = [
       { name: "은평구", coordinates: { lat: 37.6176, lng: 126.9227 } },
       { name: "종로구", coordinates: { lat: 37.5735, lng: 126.9788 } },
       { name: "중구", coordinates: { lat: 37.5663, lng: 126.9779 } },
-      { name: "중랑구", coordinates: { lat: 37.6063, lng: 127.0925 } }
+      { name: "중랑구", coordinates: { lat: 37.6063, lng: 127.0925 } },
+      // 주요 동/지역 추가
+      { name: "성수", coordinates: { lat: 37.5445, lng: 127.0557 } },
+      { name: "성수동", coordinates: { lat: 37.5445, lng: 127.0557 } },
+      { name: "홍대", coordinates: { lat: 37.5563, lng: 126.9235 } },
+      { name: "홍대입구", coordinates: { lat: 37.5563, lng: 126.9235 } },
+      { name: "신촌", coordinates: { lat: 37.5556, lng: 126.9368 } },
+      { name: "명동", coordinates: { lat: 37.5636, lng: 126.9844 } },
+      { name: "강남", coordinates: { lat: 37.4979, lng: 127.0276 } },
+      { name: "강남역", coordinates: { lat: 37.4979, lng: 127.0276 } },
+      { name: "건대", coordinates: { lat: 37.5403, lng: 127.0698 } },
+      { name: "건대입구", coordinates: { lat: 37.5403, lng: 127.0698 } },
+      { name: "잠실", coordinates: { lat: 37.5133, lng: 127.1000 } },
+      { name: "신림", coordinates: { lat: 37.4844, lng: 126.9297 } },
+      { name: "이태원", coordinates: { lat: 37.5345, lng: 126.9947 } },
+      { name: "압구정", coordinates: { lat: 37.5274, lng: 127.0280 } },
+      { name: "청담", coordinates: { lat: 37.5193, lng: 127.0473 } },
+      { name: "여의도", coordinates: { lat: 37.5219, lng: 126.9245 } },
+      { name: "목동", coordinates: { lat: 37.5263, lng: 126.8751 } },
+      { name: "신사", coordinates: { lat: 37.5165, lng: 127.0205 } },
+      { name: "논현", coordinates: { lat: 37.5112, lng: 127.0227 } },
+      { name: "삼성동", coordinates: { lat: 37.5089, lng: 127.0632 } },
+      { name: "역삼동", coordinates: { lat: 37.5004, lng: 127.0374 } },
+      { name: "선릉", coordinates: { lat: 37.5046, lng: 127.0493 } },
+      { name: "판교", coordinates: { lat: 37.3951, lng: 127.1116 } }
     ]
   },
   {
@@ -65,7 +89,16 @@ export const CITY_COORDINATES: ICityCoordinates[] = [
       { name: "연제구", coordinates: { lat: 35.1763, lng: 129.0780 } },
       { name: "수영구", coordinates: { lat: 35.1453, lng: 129.1136 } },
       { name: "사상구", coordinates: { lat: 35.1547, lng: 128.9906 } },
-      { name: "기장군", coordinates: { lat: 35.2441, lng: 129.2233 } }
+      { name: "기장군", coordinates: { lat: 35.2441, lng: 129.2233 } },
+      // 주요 동/지역 추가
+      { name: "해운대", coordinates: { lat: 35.1587, lng: 129.1603 } },
+      { name: "광안리", coordinates: { lat: 35.1532, lng: 129.1186 } },
+      { name: "남포동", coordinates: { lat: 35.0989, lng: 129.0282 } },
+      { name: "서면", coordinates: { lat: 35.1580, lng: 129.0599 } },
+      { name: "센텀시티", coordinates: { lat: 35.1695, lng: 129.1311 } },
+      { name: "송정", coordinates: { lat: 35.1786, lng: 129.1994 } },
+      { name: "부산대", coordinates: { lat: 35.2328, lng: 129.0844 } },
+      { name: "부산대학교", coordinates: { lat: 35.2328, lng: 129.0844 } }
     ]
   },
   {
@@ -129,7 +162,25 @@ export const CITY_COORDINATES: ICityCoordinates[] = [
       { name: "중구", coordinates: { lat: 36.3255, lng: 127.4214 } },
       { name: "서구", coordinates: { lat: 36.3558, lng: 127.3834 } },
       { name: "유성구", coordinates: { lat: 36.3625, lng: 127.3564 } },
-      { name: "대덕구", coordinates: { lat: 36.3465, lng: 127.4148 } }
+      { name: "대덕구", coordinates: { lat: 36.3465, lng: 127.4148 } },
+      // 주요 동/지역 추가
+      { name: "한밭대", coordinates: { lat: 36.3505, lng: 127.3012 } },
+      { name: "한밭대학교", coordinates: { lat: 36.3505, lng: 127.3012 } },
+      { name: "충남대", coordinates: { lat: 36.3666, lng: 127.3446 } },
+      { name: "충남대학교", coordinates: { lat: 36.3666, lng: 127.3446 } },
+      { name: "카이스트", coordinates: { lat: 36.3714, lng: 127.3623 } },
+      { name: "KAIST", coordinates: { lat: 36.3714, lng: 127.3623 } },
+      { name: "둔산", coordinates: { lat: 36.3505, lng: 127.3780 } },
+      { name: "둔산동", coordinates: { lat: 36.3505, lng: 127.3780 } },
+      { name: "노은", coordinates: { lat: 36.3823, lng: 127.3326 } },
+      { name: "노은동", coordinates: { lat: 36.3823, lng: 127.3326 } },
+      { name: "관평", coordinates: { lat: 36.3893, lng: 127.3276 } },
+      { name: "관평동", coordinates: { lat: 36.3893, lng: 127.3276 } },
+      { name: "신성동", coordinates: { lat: 36.3417, lng: 127.3844 } },
+      { name: "도안", coordinates: { lat: 36.3336, lng: 127.3519 } },
+      { name: "도안동", coordinates: { lat: 36.3336, lng: 127.3519 } },
+      { name: "은행동", coordinates: { lat: 36.3281, lng: 127.4265 } },
+      { name: "대전역", coordinates: { lat: 36.3323, lng: 127.4347 } }
     ]
   },
   {
