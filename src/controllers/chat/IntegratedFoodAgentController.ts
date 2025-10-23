@@ -1,55 +1,55 @@
 import { FullnessLevel } from "../../api/structures/food/IFoodRecommendation";
 import { ILatLng } from "../../api/structures/weather/IWeatherForecast";
+import { FOOD_CATEGORIES } from "../../data/foodCategories";
 import { RestaurantProvider } from "../../providers/restaurant/RestaurantProvider";
 import { FoodEvaluationService } from "../../services/FoodEvaluationService";
 import { FoodScoringService } from "../../services/FoodScoringService";
 import { FoodService } from "../../services/FoodService";
 import { IntegratedScoringService } from "../../services/IntegratedScoringService";
+import { LocationService } from "../../services/LocationService";
+import { UserHistoryService } from "../../services/UserHistoryService";
 import { WeatherAnalysisService } from "../../services/WeatherAnalysisService";
 import { WeatherService } from "../../services/WeatherService";
-import { UserHistoryService } from "../../services/UserHistoryService";
-import { FOOD_CATEGORIES } from "../../data/foodCategories";
-import { LocationService } from "../../services/LocationService";
 
 /**
  * 통합 음식 카테고리 추천 AI 에이전트 컨트롤러
- * 
+ *
  * @description
- * 사용자의 배고픔 정도, 현재 위치 날씨, 요일별 선호도를 종합하여 
+ * 사용자의 배고픔 정도, 현재 위치 날씨, 요일별 선호도를 종합하여
  * 상위 2개 음식 카테고리를 추천하는 컨트롤러입니다.
- * 
+ *
  * **카테고리 추천 플로우:**
  * 1. 사용자: "음식 추천해줘" → askForFoodRecommendation() 호출
  * 2. 사용자: 포만감(1~3)과 지역 응답 → getCategoryRecommendation() 호출
  * 3. 시스템: 통합 점수 계산 → 상위 2개 카테고리 선정 → 카테고리와 이유 반환
- * 
+ *
  * **추가 기능:**
  * - 음식점 정보까지 원하는 경우: getSmartFoodRecommendation() 사용 가능
- * 
+ *
  * **점수 계산 기준:**
  * - 현재 지역 날씨 기반 가산점 (날씨-음식 적합도)
  * - 요일별 사용자 선호도 가산점 (user_history.json 분석)
  * - 배고픔 정도에 따른 음식량 적합도
  */
-export class IntegratedFoodAgentController {  
+export class IntegratedFoodAgentController {
   private readonly foodService: FoodService;
   private readonly foodEvaluationService: FoodEvaluationService;
   private readonly weatherService: WeatherService;
   private readonly integratedScoringService: IntegratedScoringService;
-  
+
   constructor() {
     // 서비스 인스턴스들을 직접 생성 (의존성 주입 대신)
     this.weatherService = new WeatherService();
     this.foodService = new FoodService();
     this.integratedScoringService = new IntegratedScoringService();
-    
+
     const weatherAnalysisService = new WeatherAnalysisService();
     const foodScoringService = new FoodScoringService();
-    
+
     this.foodEvaluationService = new FoodEvaluationService(
       this.weatherService,
       weatherAnalysisService,
-      foodScoringService
+      foodScoringService,
     );
   }
 
@@ -72,26 +72,32 @@ export class IntegratedFoodAgentController {
     locationGuide: string;
     instruction: string;
     examples: string[];
-    todayStats?: string;  // 통계 추가
+    todayStats?: string; // 통계 추가
   }> {
     // 오늘 요일 선택 통계 조회
     const userHistoryService = new UserHistoryService();
     const stats = await userHistoryService.getDaySelectionStats();
 
-    let statsMessage = '';
+    let statsMessage = "";
     if (stats.totalSelections > 0) {
-      const medalEmojis = ['🥇', '🥈', '🥉'];
-      const topThree = stats.topSelections.slice(0, 3).map((item, index) => {
-        let categoryInfo = `${medalEmojis[index]} ${item.category} (${item.count}번)`;
+      const medalEmojis = ["🥇", "🥈", "🥉"];
+      const topThree = stats.topSelections
+        .slice(0, 3)
+        .map((item, index) => {
+          let categoryInfo = `${medalEmojis[index]} ${item.category} (${item.count}번)`;
 
-        // 음식점 정보가 있으면 추가
-        if (item.restaurants.length > 0) {
-          const restaurantNames = item.restaurants.slice(0, 2).map(r => r.name).join(', ');
-          categoryInfo += ` - ${restaurantNames}`;
-        }
+          // 음식점 정보가 있으면 추가
+          if (item.restaurants.length > 0) {
+            const restaurantNames = item.restaurants
+              .slice(0, 2)
+              .map((r) => r.name)
+              .join(", ");
+            categoryInfo += ` - ${restaurantNames}`;
+          }
 
-        return categoryInfo;
-      }).join('\n     ');
+          return categoryInfo;
+        })
+        .join("\n     ");
 
       statsMessage = `\n\n📊 참고로, 지금까지 **${stats.dayKo}**에는\n     ${topThree}\n     을/를 선택하셨어요!`;
     }
@@ -102,29 +108,31 @@ export class IntegratedFoodAgentController {
         {
           level: 3,
           description: "매우 배고픔",
-          emoji: "😋"
+          emoji: "😋",
         },
         {
           level: 2,
           description: "보통",
-          emoji: "🤔"
+          emoji: "🤔",
         },
         {
           level: 1,
           description: "배부름",
-          emoji: "😊"
-        }
+          emoji: "😊",
+        },
       ],
-      locationGuide: "📍 현재 계신 지역명을 말씀해주세요 (예: 서울, 대전, 강남구, 홍대 등)",
-      instruction: "**두 가지 방법으로 알려주실 수 있어요:**\n\n1️⃣ 배고픔 정도만 알려주기 (현재 위치 자동 사용)\n2️⃣ 배고픔 정도 + 위치를 함께 알려주기",
+      locationGuide:
+        "📍 현재 계신 지역명을 말씀해주세요 (예: 서울, 대전, 강남구, 홍대 등)",
+      instruction:
+        "**두 가지 방법으로 알려주실 수 있어요:**\n\n1️⃣ 배고픔 정도만 알려주기 (현재 위치 자동 사용)\n2️⃣ 배고픔 정도 + 위치를 함께 알려주기",
       examples: [
         "배고픔 3 (현재 위치 자동)",
         "3, 대전",
         "배고픔은 2이고, 현재 위치는 서울 홍대야",
         "1, 강남구",
-        "매우 배고픔, 부산"
+        "매우 배고픔, 부산",
       ],
-      todayStats: statsMessage
+      todayStats: statsMessage,
     };
   }
 
@@ -209,8 +217,9 @@ export class IntegratedFoodAgentController {
       if (!parsedInput.hungerLevel) {
         return {
           success: false,
-          message: "포만감 정도를 파악할 수 없습니다. 1~3 사이의 숫자로 다시 알려주세요.",
-          error: "포만감 정보 누락"
+          message:
+            "포만감 정도를 파악할 수 없습니다. 1~3 사이의 숫자로 다시 알려주세요.",
+          error: "포만감 정보 누락",
         };
       }
 
@@ -219,7 +228,7 @@ export class IntegratedFoodAgentController {
         console.log(`📍 명시적 위치 입력: ${parsedInput.location}`);
         return await this.getCategoryRecommendation({
           hungerLevel: parsedInput.hungerLevel,
-          locationName: parsedInput.location
+          locationName: parsedInput.location,
         });
       }
 
@@ -228,16 +237,15 @@ export class IntegratedFoodAgentController {
         console.log(`📍 배고픔만 입력 - 현재 위치 자동 파악 시도`);
         return await this.recommendFoodWithHungerOnly({
           hungerLevel: parsedInput.hungerLevel,
-          currentCoordinates: input.currentCoordinates
+          currentCoordinates: input.currentCoordinates,
         });
       }
-
     } catch (error) {
       console.error("포만감 입력 처리 중 오류:", error);
       return {
         success: false,
         message: "입력을 처리하는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        error: error instanceof Error ? error.message : "알 수 없는 오류"
+        error: error instanceof Error ? error.message : "알 수 없는 오류",
       };
     }
   }
@@ -278,8 +286,9 @@ export class IntegratedFoodAgentController {
       if (!input.currentCoordinates) {
         return {
           success: false,
-          message: "현재 위치 정보를 가져올 수 없습니다. 위치 설정을 다시 확인해주세요.\n\n또는 직접 위치를 입력해주세요. (예: '배고픔 3, 강남')",
-          error: "GPS 좌표 없음"
+          message:
+            "현재 위치 정보를 가져올 수 없습니다. 위치 설정을 다시 확인해주세요.\n\n또는 직접 위치를 입력해주세요. (예: '배고픔 3, 강남')",
+          error: "GPS 좌표 없음",
         };
       }
 
@@ -287,27 +296,29 @@ export class IntegratedFoodAgentController {
       const locationService = new LocationService();
       const locationInfo = await locationService.getLocation({
         method: "gps",
-        coordinates: input.currentCoordinates
+        coordinates: input.currentCoordinates,
       });
 
-      const locationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ''}`;
-      console.log(`📍 GPS 좌표로 현재 위치 파악: ${locationName} (${input.currentCoordinates.lat}, ${input.currentCoordinates.lng})`);
+      const locationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ""}`;
+      console.log(
+        `📍 GPS 좌표로 현재 위치 파악: ${locationName} (${input.currentCoordinates.lat}, ${input.currentCoordinates.lng})`,
+      );
 
       // 3. 파악된 위치로 음식 추천 실행
       const result = await this.getCategoryRecommendation({
         hungerLevel: input.hungerLevel,
         location: input.currentCoordinates,
-        locationName: locationName
+        locationName: locationName,
       });
 
       return result;
-
     } catch (error) {
       console.error("❌ 배고픔 기반 추천 중 오류:", error);
       return {
         success: false,
-        message: "위치를 파악하는 중 오류가 발생했습니다. 위치 설정을 확인하거나 직접 위치를 입력해주세요.",
-        error: error instanceof Error ? error.message : "알 수 없는 오류"
+        message:
+          "위치를 파악하는 중 오류가 발생했습니다. 위치 설정을 확인하거나 직접 위치를 입력해주세요.",
+        error: error instanceof Error ? error.message : "알 수 없는 오류",
       };
     }
   }
@@ -384,32 +395,40 @@ export class IntegratedFoodAgentController {
         try {
           const locationInfo = await locationService.getLocation({
             method: "city",
-            cityName: request.locationName
+            cityName: request.locationName,
           });
 
           // LocationService가 성공했는지 확인
           if (locationInfo.metadata?.success) {
             actualLocation = locationInfo.coordinates;
-            actualLocationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ''}`;
-            console.log(`📍 지역명 "${request.locationName}" → 좌표 변환 성공: ${actualLocationName} (${actualLocation.lat}, ${actualLocation.lng})`);
+            actualLocationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ""}`;
+            console.log(
+              `📍 지역명 "${request.locationName}" → 좌표 변환 성공: ${actualLocationName} (${actualLocation.lat}, ${actualLocation.lng})`,
+            );
           } else {
             // LocationService가 fallback으로 서울을 반환한 경우 → 원본 텍스트 사용
             actualLocation = { lat: 37.5663, lng: 126.9779 }; // 서울 기본 좌표
             actualLocationName = request.locationName; // 원본 그대로 사용 (예: "홍대")
-            console.log(`📍 지역명 "${request.locationName}" → 좌표 변환 실패, 원본 텍스트 사용 (Naver API가 처리)`);
+            console.log(
+              `📍 지역명 "${request.locationName}" → 좌표 변환 실패, 원본 텍스트 사용 (Naver API가 처리)`,
+            );
           }
         } catch (error) {
           // 에러 발생 시 원본 텍스트 그대로 사용
           actualLocation = { lat: 37.5663, lng: 126.9779 }; // 서울 기본 좌표
           actualLocationName = request.locationName; // 원본 그대로 사용
-          console.log(`📍 지역명 "${request.locationName}" → 변환 오류, 원본 텍스트 사용`);
+          console.log(
+            `📍 지역명 "${request.locationName}" → 변환 오류, 원본 텍스트 사용`,
+          );
         }
       }
       // location (좌표)만 있는 경우
       else if (request.location) {
         actualLocation = request.location;
         actualLocationName = "현재 위치";
-        console.log(`📍 GPS 좌표 사용: (${actualLocation.lat}, ${actualLocation.lng})`);
+        console.log(
+          `📍 GPS 좌표 사용: (${actualLocation.lat}, ${actualLocation.lng})`,
+        );
       }
       // 둘 다 없으면 기본값 (대전)
       else {
@@ -418,43 +437,58 @@ export class IntegratedFoodAgentController {
         console.log(`📍 기본 위치 사용: ${actualLocationName}`);
       }
 
-      console.log(`🍽️ 카테고리 추천 및 맛집 검색 시작: ${actualLocationName}, 배고픔 레벨 ${request.hungerLevel}, ${currentDay}`);
+      console.log(
+        `🍽️ 카테고리 추천 및 맛집 검색 시작: ${actualLocationName}, 배고픔 레벨 ${request.hungerLevel}, ${currentDay}`,
+      );
 
       // 1. 현재 날씨 조건 조회 (정확한 좌표로)
       const weatherConditions = await this.getWeatherConditions(actualLocation);
       console.log("📊 날씨 조회 완료:", weatherConditions);
 
       // 2. 통합 점수 계산으로 상위 2개 카테고리 선정
-      const topCategories = await this.integratedScoringService.calculateIntegratedScore(
-        weatherConditions,
-        request.hungerLevel,
-        currentDay
-      );
+      const topCategories =
+        await this.integratedScoringService.calculateIntegratedScore(
+          weatherConditions,
+          request.hungerLevel,
+          currentDay,
+        );
 
       if (topCategories.length < 2) {
         throw new Error("상위 2개 카테고리 선정 실패");
       }
 
-      console.log(`🎯 선정된 카테고리: 1위 ${topCategories[0].nameKo} (${topCategories[0].score}점), 2위 ${topCategories[1].nameKo} (${topCategories[1].score}점)`);
+      console.log(
+        `🎯 선정된 카테고리: 1위 ${topCategories[0].nameKo} (${topCategories[0].score}점), 2위 ${topCategories[1].nameKo} (${topCategories[1].score}점)`,
+      );
 
       // 3. 각 카테고리별로 Naver API 검색 (병렬 처리) - 정확한 지역명으로
       const [category1Result, category2Result] = await Promise.all([
         this.searchRestaurants(actualLocationName, topCategories[0].nameKo),
-        this.searchRestaurants(actualLocationName, topCategories[1].nameKo)
+        this.searchRestaurants(actualLocationName, topCategories[1].nameKo),
       ]);
 
-      console.log(`🔍 맛집 검색 완료: ${topCategories[0].nameKo} ${category1Result.total}개, ${topCategories[1].nameKo} ${category2Result.total}개`);
+      console.log(
+        `🔍 맛집 검색 완료: ${topCategories[0].nameKo} ${category1Result.total}개, ${topCategories[1].nameKo} ${category2Result.total}개`,
+      );
 
       // 4. 결과 포맷팅
-      const hungerDesc = request.hungerLevel === 3 ? "매우 배고픔" :
-                        request.hungerLevel === 2 ? "보통" : "배부름";
-      const weatherDesc = weatherConditions.temperature === 'hot' ? '더운 날씨' :
-                         weatherConditions.temperature === 'cold' ? '추운 날씨' : '온화한 날씨';
+      const hungerDesc =
+        request.hungerLevel === 3
+          ? "매우 배고픔"
+          : request.hungerLevel === 2
+            ? "보통"
+            : "배부름";
+      const weatherDesc =
+        weatherConditions.temperature === "hot"
+          ? "더운 날씨"
+          : weatherConditions.temperature === "cold"
+            ? "추운 날씨"
+            : "온화한 날씨";
 
       // Markdown 포맷으로 풍부한 응답 생성
       const formatRestaurant = (r: any, index: number) => {
-        const title = r.title.replace(/<[^>]*>/g, ''); // HTML 태그 제거
-        const phone = r.telephone || '정보없음';
+        const title = r.title.replace(/<[^>]*>/g, ""); // HTML 태그 제거
+        const phone = r.telephone || "정보없음";
         return `${index + 1}. **${title}**\n   - 📍 ${r.address}\n   - 📞 ${phone}`;
       };
 
@@ -463,7 +497,7 @@ export class IntegratedFoodAgentController {
 
 ### 분석 정보
 - **지역**: ${actualLocationName}
-- **날씨**: ${weatherDesc} (🌡️ ${weatherConditions.actualTemperature || 'N/A'}°C, 💧 ${weatherConditions.actualHumidity || 'N/A'}%)
+- **날씨**: ${weatherDesc} (🌡️ ${weatherConditions.actualTemperature || "N/A"}°C, 💧 ${weatherConditions.actualHumidity || "N/A"}%)
 - **배고픔**: ${hungerDesc} (${request.hungerLevel}/3)
 - **요일**: ${this.getKoreanDay(currentDay)}
 
@@ -476,7 +510,7 @@ export class IntegratedFoodAgentController {
 **점수**: ${topCategories[0].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category1Result.total}곳)
-${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -485,7 +519,7 @@ ${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
 **점수**: ${topCategories[1].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category2Result.total}곳)
-${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -501,33 +535,32 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
             second: topCategories[1].nameKo,
             reasons: [
               `1위 ${topCategories[0].nameKo}: ${topCategories[0].reason}`,
-              `2위 ${topCategories[1].nameKo}: ${topCategories[1].reason}`
-            ]
+              `2위 ${topCategories[1].nameKo}: ${topCategories[1].reason}`,
+            ],
           },
           restaurants: {
             category1: {
               categoryName: topCategories[0].nameKo,
               searchQuery: category1Result.query,
               restaurants: category1Result.restaurants || [],
-              totalCount: category1Result.total || 0
+              totalCount: category1Result.total || 0,
             },
             category2: {
               categoryName: topCategories[1].nameKo,
               searchQuery: category2Result.query,
               restaurants: category2Result.restaurants || [],
-              totalCount: category2Result.total || 0
-            }
+              totalCount: category2Result.total || 0,
+            },
           },
           analysis: {
-            weather: `${weatherDesc} (기온: ${weatherConditions.actualTemperature || 'N/A'}°C, 습도: ${weatherConditions.actualHumidity || 'N/A'}%)`,
+            weather: `${weatherDesc} (기온: ${weatherConditions.actualTemperature || "N/A"}°C, 습도: ${weatherConditions.actualHumidity || "N/A"}%)`,
             dayOfWeek: `${currentDay} (${this.getKoreanDay(currentDay)})`,
             hungerLevel: `${request.hungerLevel}/3 (${hungerDesc})`,
             locationInfo: `${actualLocationName} 지역`,
-            scoringDetails: `날씨 적합도, ${this.getKoreanDay(currentDay)} 요일별 선호도, 배고픔 정도를 종합하여 계산`
-          }
-        }
+            scoringDetails: `날씨 적합도, ${this.getKoreanDay(currentDay)} 요일별 선호도, 배고픔 정도를 종합하여 계산`,
+          },
+        },
       };
-
     } catch (error) {
       console.error("❌ 카테고리 추천 및 맛집 검색 중 오류 발생:", error);
 
@@ -535,36 +568,37 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
 
       return {
         success: false,
-        message: "죄송합니다. 일시적인 오류가 발생했습니다. 기본 추천을 제공해드립니다.",
+        message:
+          "죄송합니다. 일시적인 오류가 발생했습니다. 기본 추천을 제공해드립니다.",
         data: {
           selectedCategories: {
             first: "한식",
             second: "치킨",
-            reasons: ["기본 추천 (오류 발생)"]
+            reasons: ["기본 추천 (오류 발생)"],
           },
           restaurants: {
             category1: {
               categoryName: "한식",
               searchQuery: `${fallbackLocationName} 한식 맛집`,
               restaurants: [],
-              totalCount: 0
+              totalCount: 0,
             },
             category2: {
               categoryName: "치킨",
               searchQuery: `${fallbackLocationName} 치킨 맛집`,
               restaurants: [],
-              totalCount: 0
-            }
+              totalCount: 0,
+            },
           },
           analysis: {
             weather: "날씨 정보 없음",
             dayOfWeek: this.getCurrentDay(),
             hungerLevel: `${request.hungerLevel}/3`,
             locationInfo: fallbackLocationName,
-            scoringDetails: "오류로 인한 기본 추천"
-          }
+            scoringDetails: "오류로 인한 기본 추천",
+          },
         },
-        error: error instanceof Error ? error.message : "알 수 없는 오류"
+        error: error instanceof Error ? error.message : "알 수 없는 오류",
       };
     }
   }
@@ -587,18 +621,28 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
       hungerLevel = parseInt(numberMatch[1]) as FullnessLevel;
     } else {
       // 텍스트 기반 포만감 추출
-      if (message.includes('매우 배고') || message.includes('많이 배고') || message.includes('완전 배고')) {
+      if (
+        message.includes("매우 배고") ||
+        message.includes("많이 배고") ||
+        message.includes("완전 배고")
+      ) {
         hungerLevel = 3;
-      } else if (message.includes('보통') || message.includes('적당')) {
+      } else if (message.includes("보통") || message.includes("적당")) {
         hungerLevel = 2;
-      } else if (message.includes('배부') || message.includes('포만') || message.includes('안 배고')) {
+      } else if (
+        message.includes("배부") ||
+        message.includes("포만") ||
+        message.includes("안 배고")
+      ) {
         hungerLevel = 1;
       }
     }
 
     // 위치 추출 로직
     // 패턴 1: "배고픔은 3이고, 현재 위치는 서울 홍대야" 또는 "지역은 서울 홍대야" 형태
-    const locationPatternMatch = message.match(/(?:현재\s*)?(?:위치|지역)(?:는|은)?\s*([가-힣\s]+?)(?:야|이야|입니다|예요|이에요|이고|!|\.|,|$)/);
+    const locationPatternMatch = message.match(
+      /(?:현재\s*)?(?:위치|지역)(?:는|은)?\s*([가-힣\s]+?)(?:야|이야|입니다|예요|이에요|이고|!|\.|,|$)/,
+    );
     if (locationPatternMatch) {
       location = locationPatternMatch[1].trim();
       console.log(`📍 위치/지역 패턴 매칭: "${location}"`);
@@ -616,7 +660,9 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
       }
     }
 
-    console.log(`📝 입력 분석: "${userMessage}" → 포만감: ${hungerLevel}, 지역: ${location}`);
+    console.log(
+      `📝 입력 분석: "${userMessage}" → 포만감: ${hungerLevel}, 지역: ${location}`,
+    );
 
     return { hungerLevel, location };
   }
@@ -626,37 +672,130 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
    */
   private extractLocationFromText(text: string): string | null {
     const message = text.toLowerCase().trim();
-    
+
     // 더 상세한 지역 키워드 (구체적인 지역을 우선 검색)
     const specificLocationKeywords = [
       // 서울 구체적 지역
-      '강남구', '서초구', '송파구', '강동구', '마포구', '용산구', '종로구', '중구', '성동구', '광진구',
-      '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '양천구',
-      '강서구', '구로구', '금천구', '영등포구', '동작구', '관악구',
+      "강남구",
+      "서초구",
+      "송파구",
+      "강동구",
+      "마포구",
+      "용산구",
+      "종로구",
+      "중구",
+      "성동구",
+      "광진구",
+      "동대문구",
+      "중랑구",
+      "성북구",
+      "강북구",
+      "도봉구",
+      "노원구",
+      "은평구",
+      "서대문구",
+      "양천구",
+      "강서구",
+      "구로구",
+      "금천구",
+      "영등포구",
+      "동작구",
+      "관악구",
       // 서울 동네/지역
-      '홍대', '신촌', '명동', '강남', '건대', '잠실', '신림', '이태원', '압구정', '청담',
-      '여의도', '목동', '신사', '논현', '삼성동', '역삼동', '선릉', '판교',
-      
+      "홍대",
+      "신촌",
+      "명동",
+      "강남",
+      "건대",
+      "잠실",
+      "신림",
+      "이태원",
+      "압구정",
+      "청담",
+      "여의도",
+      "목동",
+      "신사",
+      "논현",
+      "삼성동",
+      "역삼동",
+      "선릉",
+      "판교",
+
       // 대전 구체적 지역
-      '대전 유성구', '대전 서구', '대전 중구', '대전 동구', '대전 대덕구',
-      '유성구', '서구', '중구', '동구', '대덕구',
-      '한밭대', '충남대', '카이스트', '둔산', '노은', '관평', '신성동', '도안',
-      
+      "대전 유성구",
+      "대전 서구",
+      "대전 중구",
+      "대전 동구",
+      "대전 대덕구",
+      "유성구",
+      "서구",
+      "중구",
+      "동구",
+      "대덕구",
+      "한밭대",
+      "충남대",
+      "카이스트",
+      "둔산",
+      "노은",
+      "관평",
+      "신성동",
+      "도안",
+
       // 부산 구체적 지역
-      '부산 해운대구', '부산 남구', '부산 동구', '부산 서구', '부산 중구', '부산 영도구',
-      '해운대', '광안리', '남포동', '센텀시티',
-      
+      "부산 해운대구",
+      "부산 남구",
+      "부산 동구",
+      "부산 서구",
+      "부산 중구",
+      "부산 영도구",
+      "해운대",
+      "광안리",
+      "남포동",
+      "센텀시티",
+
       // 기타 시/도
-      '인천', '대구', '광주', '울산', '세종',
-      '경기도', '강원도', '충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도', '제주도',
-      
+      "인천",
+      "대구",
+      "광주",
+      "울산",
+      "세종",
+      "경기도",
+      "강원도",
+      "충청북도",
+      "충청남도",
+      "전라북도",
+      "전라남도",
+      "경상북도",
+      "경상남도",
+      "제주도",
+
       // 기타 도시
-      '수원', '성남', '안양', '고양', '용인', '부천', '청주', '천안', '전주', '포항', '창원', '진주'
+      "수원",
+      "성남",
+      "안양",
+      "고양",
+      "용인",
+      "부천",
+      "청주",
+      "천안",
+      "전주",
+      "포항",
+      "창원",
+      "진주",
     ];
-    
+
     // 일반 지역 키워드 (기본 시/도명)
-    const generalLocationKeywords = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종'];
-    
+    const generalLocationKeywords = [
+      "서울",
+      "부산",
+      "대구",
+      "인천",
+      "광주",
+      "대전",
+      "울산",
+      "세종",
+    ];
+
     // 1. 먼저 구체적인 지역을 찾음
     for (const keyword of specificLocationKeywords) {
       if (message.includes(keyword.toLowerCase()) || text.includes(keyword)) {
@@ -664,7 +803,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         return keyword;
       }
     }
-    
+
     // 2. 구체적인 지역을 찾지 못하면 일반 지역 검색
     for (const keyword of generalLocationKeywords) {
       if (message.includes(keyword.toLowerCase()) || text.includes(keyword)) {
@@ -672,18 +811,18 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         return keyword;
       }
     }
-    
+
     // 3. 아무것도 찾지 못하면 null 반환
     return null;
   }
 
   /**
    * 스마트 음식 추천 - 통합 점수 기반 최종 추천
-   * 
+   *
    * @description
    * 배고픔 정도, 현재 위치 날씨, 요일별 선호도를 종합하여 상위 2개 카테고리를 선정하고
    * Naver API를 통해 실제 맛집 정보를 제공합니다.
-   * 
+   *
    * @param request 스마트 추천 요청 정보
    * @returns 통합 분석 결과와 맛집 추천
    */
@@ -748,32 +887,40 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         try {
           const locationInfo = await locationService.getLocation({
             method: "city",
-            cityName: request.locationName
+            cityName: request.locationName,
           });
 
           // LocationService가 성공했는지 확인
           if (locationInfo.metadata?.success) {
             actualLocation = locationInfo.coordinates;
-            actualLocationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ''}`;
-            console.log(`📍 지역명 "${request.locationName}" → 좌표 변환 성공: ${actualLocationName} (${actualLocation.lat}, ${actualLocation.lng})`);
+            actualLocationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? ` ${locationInfo.locationInfo.district}` : ""}`;
+            console.log(
+              `📍 지역명 "${request.locationName}" → 좌표 변환 성공: ${actualLocationName} (${actualLocation.lat}, ${actualLocation.lng})`,
+            );
           } else {
             // LocationService가 fallback으로 서울을 반환한 경우 → 원본 텍스트 사용
             actualLocation = { lat: 37.5663, lng: 126.9779 }; // 서울 기본 좌표
             actualLocationName = request.locationName; // 원본 그대로 사용 (예: "홍대")
-            console.log(`📍 지역명 "${request.locationName}" → 좌표 변환 실패, 원본 텍스트 사용 (Naver API가 처리)`);
+            console.log(
+              `📍 지역명 "${request.locationName}" → 좌표 변환 실패, 원본 텍스트 사용 (Naver API가 처리)`,
+            );
           }
         } catch (error) {
           // 에러 발생 시 원본 텍스트 그대로 사용
           actualLocation = { lat: 37.5663, lng: 126.9779 }; // 서울 기본 좌표
           actualLocationName = request.locationName; // 원본 그대로 사용
-          console.log(`📍 지역명 "${request.locationName}" → 변환 오류, 원본 텍스트 사용`);
+          console.log(
+            `📍 지역명 "${request.locationName}" → 변환 오류, 원본 텍스트 사용`,
+          );
         }
       }
       // location (좌표)만 있는 경우
       else if (request.location) {
         actualLocation = request.location;
         actualLocationName = "현재 위치";
-        console.log(`📍 GPS 좌표 사용: (${actualLocation.lat}, ${actualLocation.lng})`);
+        console.log(
+          `📍 GPS 좌표 사용: (${actualLocation.lat}, ${actualLocation.lng})`,
+        );
       }
       // 둘 다 없으면 기본값 (대전)
       else {
@@ -782,43 +929,58 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         console.log(`📍 기본 위치 사용: ${actualLocationName}`);
       }
 
-      console.log(`🍽️ 음식 추천 시작: ${actualLocationName}, 배고픔 레벨 ${request.hungerLevel}, ${currentDay}`);
+      console.log(
+        `🍽️ 음식 추천 시작: ${actualLocationName}, 배고픔 레벨 ${request.hungerLevel}, ${currentDay}`,
+      );
 
       // 1. 현재 날씨 조건 조회 (정확한 좌표로)
       const weatherConditions = await this.getWeatherConditions(actualLocation);
       console.log("📊 날씨 조회 완료:", weatherConditions);
 
       // 2. 통합 점수 계산으로 상위 2개 카테고리 선정
-      const topCategories = await this.integratedScoringService.calculateIntegratedScore(
-        weatherConditions,
-        request.hungerLevel,
-        currentDay
-      );
+      const topCategories =
+        await this.integratedScoringService.calculateIntegratedScore(
+          weatherConditions,
+          request.hungerLevel,
+          currentDay,
+        );
 
       if (topCategories.length < 2) {
         throw new Error("상위 2개 카테고리 선정 실패");
       }
 
-      console.log(`🎯 선정된 카테고리: 1위 ${topCategories[0].nameKo} (${topCategories[0].score}점), 2위 ${topCategories[1].nameKo} (${topCategories[1].score}점)`);
+      console.log(
+        `🎯 선정된 카테고리: 1위 ${topCategories[0].nameKo} (${topCategories[0].score}점), 2위 ${topCategories[1].nameKo} (${topCategories[1].score}점)`,
+      );
 
       // 3. 각 카테고리별로 Naver API 검색 (병렬 처리) - 정확한 지역명으로
       const [category1Result, category2Result] = await Promise.all([
         this.searchRestaurants(actualLocationName, topCategories[0].nameKo),
-        this.searchRestaurants(actualLocationName, topCategories[1].nameKo)
+        this.searchRestaurants(actualLocationName, topCategories[1].nameKo),
       ]);
 
-      console.log(`🔍 맛집 검색 완료: ${topCategories[0].nameKo} ${category1Result.total}개, ${topCategories[1].nameKo} ${category2Result.total}개`);
+      console.log(
+        `🔍 맛집 검색 완료: ${topCategories[0].nameKo} ${category1Result.total}개, ${topCategories[1].nameKo} ${category2Result.total}개`,
+      );
 
       // 4. 결과 포맷팅
-      const hungerDesc = request.hungerLevel === 3 ? "매우 배고픔" :
-                        request.hungerLevel === 2 ? "보통" : "배부름";
-      const weatherDesc = weatherConditions.temperature === 'hot' ? '더운 날씨' :
-                         weatherConditions.temperature === 'cold' ? '추운 날씨' : '온화한 날씨';
+      const hungerDesc =
+        request.hungerLevel === 3
+          ? "매우 배고픔"
+          : request.hungerLevel === 2
+            ? "보통"
+            : "배부름";
+      const weatherDesc =
+        weatherConditions.temperature === "hot"
+          ? "더운 날씨"
+          : weatherConditions.temperature === "cold"
+            ? "추운 날씨"
+            : "온화한 날씨";
 
       // Markdown 포맷으로 풍부한 응답 생성
       const formatRestaurant = (r: any, index: number) => {
-        const title = r.title.replace(/<[^>]*>/g, ''); // HTML 태그 제거
-        const phone = r.telephone || '정보없음';
+        const title = r.title.replace(/<[^>]*>/g, ""); // HTML 태그 제거
+        const phone = r.telephone || "정보없음";
         return `${index + 1}. **${title}**\n   - 📍 ${r.address}\n   - 📞 ${phone}`;
       };
 
@@ -827,7 +989,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
 
 ### 📊 분석 정보
 - **지역**: ${actualLocationName}
-- **날씨**: ${weatherDesc} (🌡️ ${weatherConditions.actualTemperature || 'N/A'}°C, 💧 ${weatherConditions.actualHumidity || 'N/A'}%)
+- **날씨**: ${weatherDesc} (🌡️ ${weatherConditions.actualTemperature || "N/A"}°C, 💧 ${weatherConditions.actualHumidity || "N/A"}%)
 - **배고픔**: ${hungerDesc} (${request.hungerLevel}/3)
 - **요일**: ${this.getKoreanDay(currentDay)}
 
@@ -840,7 +1002,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
 **점수**: ${topCategories[0].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category1Result.total}곳)
-${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -849,7 +1011,7 @@ ${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
 **점수**: ${topCategories[1].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category2Result.total}곳)
-${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
+${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -865,32 +1027,31 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
             second: topCategories[1].nameKo,
             reasons: [
               `1위 ${topCategories[0].nameKo}: ${topCategories[0].reason}`,
-              `2위 ${topCategories[1].nameKo}: ${topCategories[1].reason}`
-            ]
+              `2위 ${topCategories[1].nameKo}: ${topCategories[1].reason}`,
+            ],
           },
           restaurants: {
             category1: {
               categoryName: topCategories[0].nameKo,
               searchQuery: category1Result.query,
               restaurants: category1Result.restaurants || [],
-              totalCount: category1Result.total || 0
+              totalCount: category1Result.total || 0,
             },
             category2: {
               categoryName: topCategories[1].nameKo,
               searchQuery: category2Result.query,
               restaurants: category2Result.restaurants || [],
-              totalCount: category2Result.total || 0
-            }
+              totalCount: category2Result.total || 0,
+            },
           },
           analysis: {
-            weather: `${weatherDesc} (기온: ${weatherConditions.actualTemperature || 'N/A'}°C, 습도: ${weatherConditions.actualHumidity || 'N/A'}%)`,
+            weather: `${weatherDesc} (기온: ${weatherConditions.actualTemperature || "N/A"}°C, 습도: ${weatherConditions.actualHumidity || "N/A"}%)`,
             dayOfWeek: `${currentDay} (${this.getKoreanDay(currentDay)})`,
             hungerLevel: `${request.hungerLevel}/3 (${hungerDesc})`,
-            scoringDetails: `날씨 적합도, ${this.getKoreanDay(currentDay)} 요일별 선호도, 배고픔 정도를 종합하여 계산`
-          }
-        }
+            scoringDetails: `날씨 적합도, ${this.getKoreanDay(currentDay)} 요일별 선호도, 배고픔 정도를 종합하여 계산`,
+          },
+        },
       };
-
     } catch (error) {
       console.error("❌ 스마트 음식 추천 중 오류 발생:", error);
 
@@ -898,35 +1059,36 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
 
       return {
         success: false,
-        message: "죄송합니다. 일시적인 오류가 발생했습니다. 기본 추천을 제공해드립니다.",
+        message:
+          "죄송합니다. 일시적인 오류가 발생했습니다. 기본 추천을 제공해드립니다.",
         data: {
           selectedCategories: {
             first: "한식",
             second: "치킨",
-            reasons: ["기본 추천 (오류 발생)"]
+            reasons: ["기본 추천 (오류 발생)"],
           },
           restaurants: {
             category1: {
               categoryName: "한식",
               searchQuery: `${fallbackLocationName} 한식 맛집`,
               restaurants: [],
-              totalCount: 0
+              totalCount: 0,
             },
             category2: {
               categoryName: "치킨",
               searchQuery: `${fallbackLocationName} 치킨 맛집`,
               restaurants: [],
-              totalCount: 0
-            }
+              totalCount: 0,
+            },
           },
           analysis: {
             weather: "날씨 정보 없음",
             dayOfWeek: this.getCurrentDay(),
             hungerLevel: `${request.hungerLevel}/3`,
-            scoringDetails: "오류로 인한 기본 추천"
-          }
+            scoringDetails: "오류로 인한 기본 추천",
+          },
         },
-        error: error instanceof Error ? error.message : "알 수 없는 오류"
+        error: error instanceof Error ? error.message : "알 수 없는 오류",
       };
     }
   }
@@ -935,7 +1097,15 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
    * 현재 요일을 영어로 반환합니다.
    */
   private getCurrentDay(): string {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
     const today = new Date();
     return days[today.getDay()];
   }
@@ -945,13 +1115,13 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
    */
   private getKoreanDay(englishDay: string): string {
     const dayMap: { [key: string]: string } = {
-      "Sunday": "일요일",
-      "Monday": "월요일", 
-      "Tuesday": "화요일",
-      "Wednesday": "수요일",
-      "Thursday": "목요일",
-      "Friday": "금요일",
-      "Saturday": "토요일"
+      Sunday: "일요일",
+      Monday: "월요일",
+      Tuesday: "화요일",
+      Wednesday: "수요일",
+      Thursday: "목요일",
+      Friday: "금요일",
+      Saturday: "토요일",
     };
     return dayMap[englishDay] || englishDay;
   }
@@ -961,9 +1131,10 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
    */
   private async getWeatherConditions(location: ILatLng) {
     try {
-      const weatherEvaluation = await this.foodEvaluationService.evaluateFoodByWeather({
-        location: location
-      });
+      const weatherEvaluation =
+        await this.foodEvaluationService.evaluateFoodByWeather({
+          location: location,
+        });
       return weatherEvaluation.weather;
     } catch (error) {
       console.warn("날씨 조회 실패, 기본값 사용:", error);
@@ -972,7 +1143,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         temperature: "moderate" as const,
         humidity: "moderate" as const,
         actualTemperature: 20,
-        actualHumidity: 50
+        actualHumidity: 50,
       };
     }
   }
@@ -985,42 +1156,71 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
    * "대전 한밭대" → "대전 한밭대 근처 한식 맛집" 형태로 검색
    * 검색 결과는 주소 기반으로 필터링하여 정확한 지역 맛집만 반환합니다.
    */
-  private async searchRestaurants(location: string, category: string): Promise<any> {
+  private async searchRestaurants(
+    location: string,
+    category: string,
+  ): Promise<any> {
     try {
       // 더 구체적인 검색 쿼리 생성
       let searchQuery: string;
 
       // 구체적인 지역이 포함된 경우 (예: "대전 한밭대", "서울 강남구")
-      if (location.includes(' ') || location.length > 3) {
+      if (location.includes(" ") || location.length > 3) {
         searchQuery = `${location} 근처 ${category} 맛집`;
       } else {
         // 일반적인 시/도명인 경우 (예: "대전", "서울")
         searchQuery = `${location} ${category} 맛집`;
       }
 
-      console.log(`🔍 맛집 검색 쿼리: "${searchQuery}"`);
+      console.log(
+        `🔍 [${category}] 맛집 검색 쿼리: "${searchQuery}" (위치: ${location})`,
+      );
 
       // 더 많은 결과를 가져와서 필터링 (10개 → 필터링 후 5개 이상 확보)
       const result = await RestaurantProvider.search({
         query: searchQuery,
-        display: 15
+        display: 20, // 15 → 20으로 증가
       });
 
       // 주소 기반 필터링: location이 포함된 결과만 선택
       let filteredRestaurants = result.items || [];
 
-      // location의 핵심 키워드 추출 (예: "서울 강남구" → "강남", "전주" → "전주")
-      const locationKeywords = this.extractLocationKeywords(location);
+      // location의 핵심 키워드 추출 및 더 엄격한 필터링
+      const locationInfo = this.parseLocationForFiltering(location);
 
-      if (locationKeywords.length > 0) {
+      if (locationInfo.keywords.length > 0) {
         const beforeFilterCount = filteredRestaurants.length;
         filteredRestaurants = filteredRestaurants.filter((item: any) => {
-          const address = (item.address || item.roadAddress || '').toLowerCase();
-          // 키워드 중 하나라도 주소에 포함되어 있으면 OK
-          return locationKeywords.some(keyword => address.includes(keyword.toLowerCase()));
+          const address = (
+            item.address ||
+            item.roadAddress ||
+            ""
+          ).toLowerCase();
+
+          // 시/도 정보가 있으면 먼저 확인 (더 엄격한 필터링)
+          if (locationInfo.city) {
+            if (!address.includes(locationInfo.city.toLowerCase())) {
+              return false; // 시/도가 다르면 제외
+            }
+          }
+
+          // 키워드 중 하나라도 주소에 포함되어 있어야 함
+          return locationInfo.keywords.some((keyword) =>
+            address.includes(keyword.toLowerCase()),
+          );
         });
 
-        console.log(`📍 주소 필터링: ${beforeFilterCount}개 → ${filteredRestaurants.length}개 (키워드: ${locationKeywords.join(', ')})`);
+        console.log(
+          `📍 [${category}] 주소 필터링: ${beforeFilterCount}개 → ${filteredRestaurants.length}개 (도시: ${locationInfo.city || "N/A"}, 키워드: ${locationInfo.keywords.join(", ")})`,
+        );
+      }
+
+      // 필터링 후에도 결과가 너무 적으면 경고
+      if (filteredRestaurants.length < 3) {
+        console.warn(
+          `⚠️ [${category}] 필터링 결과가 부족합니다 (${filteredRestaurants.length}개). 원본 결과 사용`,
+        );
+        filteredRestaurants = result.items || [];
       }
 
       // 필터링 후 상위 5개만 반환
@@ -1028,7 +1228,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         query: searchQuery,
         category: category,
         restaurants: filteredRestaurants.slice(0, 5),
-        total: filteredRestaurants.length
+        total: filteredRestaurants.length,
       };
     } catch (error) {
       console.error(`${category} 맛집 검색 실패:`, error);
@@ -1040,7 +1240,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
       try {
         const fallbackResult = await RestaurantProvider.search({
           query: fallbackQuery,
-          display: 5
+          display: 5,
         });
 
         return {
@@ -1048,7 +1248,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
           category: category,
           restaurants: fallbackResult.items || [],
           total: fallbackResult.total || 0,
-          note: "기본 검색으로 재시도됨"
+          note: "기본 검색으로 재시도됨",
         };
       } catch (fallbackError) {
         console.error(`${category} 재시도 검색도 실패:`, fallbackError);
@@ -1057,7 +1257,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
           category: category,
           restaurants: [],
           total: 0,
-          error: "검색 실패"
+          error: "검색 실패",
         };
       }
     }
@@ -1073,11 +1273,14 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
     // "전주" → ["전주"]
     // "대전 한밭대" → ["대전"]
 
-    const parts = location.split(' ').map(p => p.trim()).filter(p => p.length > 0);
+    const parts = location
+      .split(" ")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
 
     for (const part of parts) {
       // "구", "동", "시" 제거
-      const cleaned = part.replace(/(구|동|시)$/, '');
+      const cleaned = part.replace(/(구|동|시)$/, "");
       if (cleaned.length >= 2) {
         keywords.push(cleaned);
       }
@@ -1091,7 +1294,134 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
     return keywords;
   }
 
+  /**
+   * 위치 정보를 더 정확하게 파싱하여 필터링용 데이터 생성
+   *
+   * @description
+   * 시/도 정보와 세부 지역 정보를 분리하여 더 엄격한 주소 필터링을 가능하게 합니다.
+   *
+   * @example
+   * "강남" → { city: "서울", keywords: ["강남"] }
+   * "대전 한밭대" → { city: "대전", keywords: ["대전", "한밭"] }
+   * "서울 강남구" → { city: "서울", keywords: ["강남"] }
+   */
+  private parseLocationForFiltering(location: string): {
+    city: string | null;
+    keywords: string[];
+  } {
+    const parts = location
+      .split(" ")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    const keywords: string[] = [];
+    let city: string | null = null;
 
+    // 주요 시/도 목록
+    const majorCities = [
+      "서울",
+      "부산",
+      "대구",
+      "인천",
+      "광주",
+      "대전",
+      "울산",
+      "세종",
+    ];
+    const provinces = [
+      "경기",
+      "강원",
+      "충북",
+      "충남",
+      "전북",
+      "전남",
+      "경북",
+      "경남",
+      "제주",
+    ];
+
+    for (const part of parts) {
+      // 시/도 확인
+      if (majorCities.includes(part)) {
+        city = part;
+        keywords.push(part);
+      } else if (provinces.some((prov) => part.startsWith(prov))) {
+        city = part;
+        keywords.push(part);
+      } else {
+        // 세부 지역명 처리
+        const cleaned = part.replace(/(구|동|시|군|읍|면)$/, "");
+        if (cleaned.length >= 2) {
+          keywords.push(cleaned);
+        }
+      }
+    }
+
+    // "강남"처럼 단독 지역명인 경우 서울로 추정
+    if (!city && keywords.length === 1) {
+      const singleLocation = keywords[0];
+      const seoulDistricts = [
+        "강남",
+        "서초",
+        "송파",
+        "강동",
+        "마포",
+        "용산",
+        "종로",
+        "중구",
+        "성동",
+        "광진",
+        "동대문",
+        "중랑",
+        "성북",
+        "강북",
+        "도봉",
+        "노원",
+        "은평",
+        "서대문",
+        "양천",
+        "강서",
+        "구로",
+        "금천",
+        "영등포",
+        "동작",
+        "관악",
+        "홍대",
+        "신촌",
+        "명동",
+        "건대",
+        "잠실",
+        "신림",
+        "이태원",
+        "압구정",
+        "청담",
+        "여의도",
+        "목동",
+        "신사",
+        "논현",
+        "삼성",
+        "역삼",
+        "선릉",
+      ];
+
+      if (
+        seoulDistricts.some(
+          (district) =>
+            singleLocation.includes(district) ||
+            district.includes(singleLocation),
+        )
+      ) {
+        city = "서울";
+        console.log(`📍 "${singleLocation}" → 서울 지역으로 추정`);
+      }
+    }
+
+    // 키워드가 없으면 원본 사용
+    if (keywords.length === 0) {
+      keywords.push(location);
+    }
+
+    return { city, keywords };
+  }
 
   /**
    * 레거시 호환성을 위한 기존 메소드 (숨김 처리)
@@ -1112,7 +1442,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
     return {
       question: newFormat.question,
       fullnessOptions: newFormat.hungerLevels,
-      instruction: newFormat.instruction
+      instruction: newFormat.instruction,
     };
   }
 
@@ -1137,14 +1467,16 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
    * 사용자: "화요일 통계 보여줘"
    * 사용자: "내 선택 통계 보여줘" (오늘 요일)
    */
-  public async getTodayFoodStatistics(input: {
-    /**
-     * 조회할 요일 (선택사항)
-     * 예: "월요일", "화요일", "Monday", "Tuesday" 등
-     * 지정하지 않으면 오늘 요일
-     */
-    dayOfWeek?: string;
-  } = {}): Promise<{
+  public async getTodayFoodStatistics(
+    input: {
+      /**
+       * 조회할 요일 (선택사항)
+       * 예: "월요일", "화요일", "Monday", "Tuesday" 등
+       * 지정하지 않으면 오늘 요일
+       */
+      dayOfWeek?: string;
+    } = {},
+  ): Promise<{
     success: boolean;
     message: string;
     data?: {
@@ -1173,23 +1505,27 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join('\n\n')}
         return {
           success: true,
           message: `아직 ${stats.dayKo}에 선택하신 음식 기록이 없습니다. 추천을 받고 실제로 드신 음식을 알려주시면 통계가 쌓여요!`,
-          data: stats
+          data: stats,
         };
       }
 
       // Markdown 포맷으로 통계 메시지 생성
-      const medalEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-      const statsLines = stats.topSelections.map((item, index) => {
-        let line = `${medalEmojis[index]} **${item.category}** - ${item.count}번 (${item.percentage}%)`;
+      const medalEmojis = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+      const statsLines = stats.topSelections
+        .map((item, index) => {
+          let line = `${medalEmojis[index]} **${item.category}** - ${item.count}번 (${item.percentage}%)`;
 
-        // 자주 방문한 음식점 정보 추가
-        if (item.restaurants.length > 0) {
-          const restaurantList = item.restaurants.map(r => `${r.name} (${r.count}번)`).join(', ');
-          line += `\n   - 자주 방문: ${restaurantList}`;
-        }
+          // 자주 방문한 음식점 정보 추가
+          if (item.restaurants.length > 0) {
+            const restaurantList = item.restaurants
+              .map((r) => `${r.name} (${r.count}번)`)
+              .join(", ");
+            line += `\n   - 자주 방문: ${restaurantList}`;
+          }
 
-        return line;
-      }).join('\n\n');
+          return line;
+        })
+        .join("\n\n");
 
       const message = `
 ## 📊 ${stats.dayKo} 음식 선택 통계
@@ -1205,14 +1541,13 @@ ${statsLines}
       return {
         success: true,
         message,
-        data: stats
+        data: stats,
       };
-
     } catch (error) {
       console.error("❌ 통계 조회 중 오류:", error);
       return {
         success: false,
-        message: "통계를 불러오는 중 오류가 발생했습니다."
+        message: "통계를 불러오는 중 오류가 발생했습니다.",
       };
     }
   }
@@ -1264,22 +1599,520 @@ ${statsLines}
       await userHistoryService.saveUserSelection({
         selectedFood: input.selectedFood,
         category: finalCategory,
-        restaurantName: input.restaurantName
+        restaurantName: input.restaurantName,
       });
 
-      const restaurantPart = input.restaurantName ? ` (${input.restaurantName})` : '';
+      const restaurantPart = input.restaurantName
+        ? ` (${input.restaurantName})`
+        : "";
       return {
         success: true,
-        message: `${input.selectedFood}${restaurantPart} 선택을 기록했습니다! 다음 추천 때 이 정보를 활용할게요 😊`
+        message: `${input.selectedFood}${restaurantPart} 선택을 기록했습니다! 다음 추천 때 이 정보를 활용할게요 😊`,
       };
-
     } catch (error) {
       console.error("❌ 사용자 선택 저장 중 오류:", error);
       return {
         success: false,
-        message: "선택 저장 중 오류가 발생했습니다. 다시 시도해주세요."
+        message: "선택 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
       };
     }
+  }
+
+  /**
+   * 사용자가 방문한 식당을 기록합니다 (2단계 GPT 기반 전략)
+   *
+   * @description
+   * 사용자가 "쉐이크쉑 갈거야", "마초쉐프 다녀왔어" 등으로 말할 때
+   * GPT를 통해 전체 메시지를 분석하여 식당 이름과 카테고리를 동시에 추출합니다.
+   *
+   * **2단계 전략:**
+   * 1. GPT 전체 분석: 사용자 메시지 전체를 GPT에 보내서 식당 이름 + 카테고리 추출
+   * 2. 사용자 확인: GPT도 실패하면 사용자에게 직접 질문
+   *
+   * @example
+   * 사용자: "쉐이크쉑 갈거야" → GPT가 {식당: "쉐이크쉑", 카테고리: "버거"} 추출
+   * 사용자: "마초쉐프 다녀왔어" → GPT가 {식당: "마초쉐프", 카테고리: "양식"} 추출
+   * 사용자: "오늘 교촌치킨 먹었어" → GPT가 {식당: "교촌치킨", 카테고리: "치킨"} 추출
+   */
+  public async recordVisitedRestaurant(input: {
+    /**
+     * 식당 이름 또는 음식 종류
+     * 예: "교촌치킨", "쉐이크쉑", "마초쉐프"
+     */
+    restaurantOrFood: string;
+
+    /**
+     * 사용자 메시지 원문 (전체 컨텍스트)
+     * 예: "오늘 쉐이크쉑 강남점 갈거야"
+     */
+    originalMessage?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    needsConfirmation?: boolean;
+    suggestedCategories?: string[];
+    restaurantName?: string; // state 저장용
+    data?: {
+      restaurantName?: string;
+      category?: string;
+    };
+  }> {
+    try {
+      const userMessage = input.originalMessage || input.restaurantOrFood;
+      console.log(`🏪 식당 방문 기록 시작: "${userMessage}"`);
+
+      // 1단계: GPT에게 전체 메시지 분석 요청
+      console.log(`🤖 GPT를 통한 식당 이름 + 카테고리 동시 추출 시도`);
+      const gptResult = await this.analyzeRestaurantVisitWithGPT(userMessage);
+
+      if (gptResult && gptResult.category && gptResult.restaurantName) {
+        console.log(
+          `✅ GPT 분석 성공: "${gptResult.restaurantName}" → "${gptResult.category}"`,
+        );
+
+        // 히스토리에 저장
+        const userHistoryService = new UserHistoryService();
+        await userHistoryService.saveUserSelection({
+          selectedFood: gptResult.category,
+          category: gptResult.category,
+          restaurantName: gptResult.restaurantName,
+        });
+
+        return {
+          success: true,
+          message: `${gptResult.restaurantName}에서 ${gptResult.category} ${gptResult.isFuture ? '드실 예정이시군요' : '드셨군요'}! 기록했습니다 😊`,
+          data: {
+            restaurantName: gptResult.restaurantName,
+            category: gptResult.category,
+          },
+        };
+      }
+
+      // 2단계: GPT도 모르면 사용자에게 카테고리 질문
+      console.log(`❓ GPT가 식당을 모름 - 사용자에게 카테고리 질문`);
+
+      // GPT 결과에서 식당 이름 추출 시도 (없으면 전체 메시지에서 추출)
+      const extractedName = input.restaurantOrFood || userMessage;
+
+      return {
+        success: false,
+        needsConfirmation: true,
+        restaurantName: extractedName, // state 저장용
+        message: `"${extractedName}"은(는) 어떤 종류의 음식점인가요?\n\n간단히 알려주세요:\n예시: "한식"\n예시: "버거"\n예시: "일식집"`,
+        suggestedCategories: [
+          "한식",
+          "중식",
+          "일식",
+          "양식",
+          "치킨",
+          "피자",
+          "분식",
+          "디저트",
+          "커피/차",
+          "버거",
+          "회/해물",
+          "족발/보쌈",
+          "찜/탕",
+          "구이",
+          "샐러드",
+          "샌드위치",
+          "멕시칸",
+          "아시안",
+          "도시락",
+          "죽",
+          "기타",
+        ],
+      };
+    } catch (error) {
+      console.error("❌ 식당 방문 기록 중 오류:", error);
+      return {
+        success: false,
+        message: "기록 중 오류가 발생했습니다. 다시 시도해주세요.",
+      };
+    }
+  }
+
+  /**
+   * 확장된 키워드 매칭 (프랜차이즈 브랜드 포함)
+   */
+  private matchFoodCategoryEnhanced(input: string): string | undefined {
+    const lowerInput = input.toLowerCase();
+
+    // 프랜차이즈 브랜드 → 카테고리 매핑
+    const franchiseMap: { [key: string]: string } = {
+      // 치킨
+      교촌: "치킨",
+      굽네: "치킨",
+      bhc: "치킨",
+      bbq: "치킨",
+      kfc: "치킨",
+      페리카나: "치킨",
+      네네: "치킨",
+      처갓집: "치킨",
+      호식이: "치킨",
+      또래오래: "치킨",
+
+      // 피자
+      피자헛: "피자",
+      도미노: "피자",
+      파파존스: "피자",
+      미스터피자: "피자",
+
+      // 버거
+      맥도날드: "버거",
+      버거킹: "버거",
+      롯데리아: "버거",
+      맘스터치: "버거",
+      쉐이크쉑: "버거",
+      파이브가이즈: "버거",
+      노브랜드버거: "버거",
+
+      // 분식
+      신전: "분식",
+      국대떡볶이: "분식",
+      죠스떡볶이: "분식",
+      청년떡볶이: "분식",
+      본죽: "죽",
+      죽이야기: "죽",
+
+      // 카페/디저트
+      스타벅스: "커피/차",
+      투썸: "디저트",
+      이디야: "커피/차",
+      커피빈: "커피/차",
+      할리스: "커피/차",
+      탐앤탐스: "커피/차",
+      빽다방: "커피/차",
+      설빙: "디저트",
+      배스킨라빈스: "디저트",
+
+      // 한식
+      백종원: "한식",
+      본가: "한식",
+      할매집: "한식",
+
+      // 양식
+      아웃백: "양식",
+      빕스: "양식",
+      애슐리: "양식",
+      계절밥상: "양식",
+
+      // 중식
+      홍콩반점: "중식",
+      차이나팩토리: "중식",
+
+      // 일식
+      스시: "회/해물",
+      초밥: "회/해물",
+
+      // 족발/보쌈
+      원조할매: "족발/보쌈",
+      놀부: "족발/보쌈",
+    };
+
+    // 브랜드명 매칭
+    for (const [brand, category] of Object.entries(franchiseMap)) {
+      if (lowerInput.includes(brand)) {
+        return category;
+      }
+    }
+
+    // 기본 키워드 매칭 (FOOD_CATEGORIES 활용)
+    return this.matchFoodCategory(input);
+  }
+
+  /**
+   * Naver API를 통해 식당 검색 후 카테고리 추론
+   */
+  private async inferCategoryFromNaverAPI(
+    restaurantName: string,
+  ): Promise<string | undefined> {
+    try {
+      // Naver API로 식당 검색
+      const searchResult = await RestaurantProvider.search({
+        query: restaurantName,
+        display: 1, // 최상위 결과 1개만
+      });
+
+      if (!searchResult.items || searchResult.items.length === 0) {
+        console.log(`❌ Naver API 검색 결과 없음: "${restaurantName}"`);
+        return undefined;
+      }
+
+      const firstResult = searchResult.items[0];
+      const category = firstResult.category;
+
+      if (!category) {
+        console.log(`❌ Naver API 결과에 category 필드 없음`);
+        return undefined;
+      }
+
+      console.log(`📊 Naver API category: "${category}"`);
+
+      // Naver API의 category 필드 파싱
+      // 예: "음식점>한식>한정식" → "한식"
+      //     "음식점>치킨,닭강정" → "치킨"
+      return this.parseCategoryFromNaver(category);
+    } catch (error) {
+      console.error("❌ Naver API 검색 중 오류:", error);
+      return undefined;
+    }
+  }
+
+  /**
+   * GPT를 통해 사용자 메시지 전체를 분석하여 식당 방문 정보 추출
+   *
+   * @description
+   * 사용자가 "쉐이크쉑 갈거야", "마초쉐프 다녀왔어" 같은 메시지를 보내면
+   * GPT가 식당 이름, 카테고리, 시제(과거/미래)를 동시에 분석합니다.
+   *
+   * @example
+   * "쉐이크쉑 갈거야" → {restaurantName: "쉐이크쉑", category: "버거", isFuture: true}
+   * "마초쉐프 다녀왔어" → {restaurantName: "마초쉐프", category: "양식", isFuture: false}
+   */
+  private async analyzeRestaurantVisitWithGPT(
+    userMessage: string,
+  ): Promise<
+    | {
+        restaurantName: string;
+        category: string;
+        isFuture: boolean;
+      }
+    | undefined
+  > {
+    try {
+      const OpenAI = (await import("openai")).default;
+      const { MyGlobal } = await import("../../MyGlobal");
+
+      const openai = new OpenAI({
+        apiKey: MyGlobal.env.OPENROUTER_API_KEY,
+        baseURL: "https://openrouter.ai/api/v1",
+      });
+
+      const availableCategories = [
+        "한식",
+        "중식",
+        "일식",
+        "양식",
+        "치킨",
+        "피자",
+        "분식",
+        "디저트",
+        "커피/차",
+        "버거",
+        "회/해물",
+        "족발/보쌈",
+        "찜/탕",
+        "구이",
+        "샐러드",
+        "샌드위치",
+        "멕시칸",
+        "아시안",
+        "도시락",
+        "죽",
+      ];
+
+      const prompt = `다음 사용자 메시지를 분석하여 식당 방문 정보를 추출해주세요.
+
+사용자 메시지: "${userMessage}"
+
+가능한 음식 카테고리 목록:
+${availableCategories.join(", ")}
+
+**매우 중요한 지침:**
+
+**두 가지 패턴을 처리해야 합니다:**
+
+1. **패턴 1: 식당 방문 의사 표현** (예: "연하동 갈거야", "교촌치킨 먹었어")
+   - 식당 이름을 파악하세요.
+   - 해당 식당에 대해 **확실히 알고 있다면**: 위 카테고리 목록 중 정확히 하나를 선택하세요.
+   - **모르거나 확신이 없다면**: category를 "unknown"으로 설정하세요. 절대 추측하지 마세요!
+   - 시제(과거/미래)를 파악하세요.
+
+2. **패턴 2: 식당 카테고리 알려주기** (예: "연하동은 일식이야", "거기는 버거 파는 곳이야")
+   - 사용자가 직접 카테고리를 알려주는 경우입니다.
+   - 식당 이름과 카테고리를 추출하세요.
+   - 시제는 기본적으로 과거(false)로 설정하세요.
+
+**JSON 형식으로만 답변하세요:**
+{"restaurantName": "식당이름", "category": "카테고리 또는 unknown", "isFuture": true/false}
+
+**예시:**
+- "쉐이크쉑 갈거야" → {"restaurantName": "쉐이크쉑", "category": "버거", "isFuture": true}  (패턴1, 알고 있음)
+- "교촌치킨 먹었어" → {"restaurantName": "교촌치킨", "category": "치킨", "isFuture": false}  (패턴1, 알고 있음)
+- "모르는식당 다녀왔어" → {"restaurantName": "모르는식당", "category": "unknown", "isFuture": false}  (패턴1, 모름)
+- "연하동은 일식이야" → {"restaurantName": "연하동", "category": "일식", "isFuture": false}  (패턴2, 사용자가 알려줌)
+- "거기는 버거야" → {"restaurantName": "거기", "category": "버거", "isFuture": false}  (패턴2)
+
+답변:`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "당신은 사용자 메시지에서 식당 방문 정보를 정확히 추출하는 전문가입니다. 항상 JSON 형식으로만 답변하세요. 모르는 식당은 절대 추측하지 말고 category를 'unknown'으로 설정하세요.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.1, // 더 낮은 temperature로 일관성 향상
+        max_tokens: 100,
+      });
+
+      const responseText = completion.choices[0]?.message?.content?.trim();
+
+      if (!responseText) {
+        console.log(`❌ GPT 응답 없음`);
+        return undefined;
+      }
+
+      // JSON 파싱 시도
+      try {
+        // ```json ... ``` 형식인 경우 처리
+        let jsonText = responseText;
+        if (responseText.includes("```json")) {
+          jsonText = responseText
+            .replace(/```json\s*/g, "")
+            .replace(/```\s*/g, "")
+            .trim();
+        } else if (responseText.includes("```")) {
+          jsonText = responseText.replace(/```\s*/g, "").trim();
+        }
+
+        const parsed = JSON.parse(jsonText);
+
+        // GPT가 모르는 식당인 경우 (unknown 반환)
+        if (parsed.category === "unknown") {
+          console.log(`❓ GPT가 "${parsed.restaurantName}"을(를) 모름`);
+          return undefined;
+        }
+
+        // 유효성 검증
+        if (
+          parsed.restaurantName &&
+          parsed.category &&
+          availableCategories.includes(parsed.category) &&
+          typeof parsed.isFuture === "boolean"
+        ) {
+          console.log(
+            `🤖 GPT 분석 성공: "${parsed.restaurantName}" → "${parsed.category}" (${parsed.isFuture ? '미래' : '과거'})`,
+          );
+          return {
+            restaurantName: parsed.restaurantName,
+            category: parsed.category,
+            isFuture: parsed.isFuture,
+          };
+        } else {
+          console.log(`⚠️ GPT 응답 형식 오류:`, parsed);
+          return undefined;
+        }
+      } catch (parseError) {
+        console.error(`❌ JSON 파싱 실패:`, responseText);
+        return undefined;
+      }
+    } catch (error) {
+      console.error("❌ GPT 식당 방문 분석 중 오류:", error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Naver API의 category 필드에서 우리 시스템의 카테고리로 변환
+   */
+  private parseCategoryFromNaver(naverCategory: string): string | undefined {
+    const lowerCategory = naverCategory.toLowerCase();
+
+    // Naver 카테고리 → 우리 카테고리 매핑
+    const categoryMap: { [key: string]: string } = {
+      // 한식
+      한식: "한식",
+      한정식: "한식",
+      백반: "한식",
+      국밥: "한식",
+      찌개: "찜/탕",
+      탕: "찜/탕",
+      전골: "찜/탕",
+      찜: "찜/탕",
+      불고기: "구이",
+      삼겹살: "구이",
+      갈비: "구이",
+      고기: "구이",
+      족발: "족발/보쌈",
+      보쌈: "족발/보쌈",
+
+      // 중식
+      중식: "중식",
+      중국: "중식",
+      짜장: "중식",
+      짬뽕: "중식",
+
+      // 일식
+      일식: "일식",
+      일본: "일식",
+      초밥: "회/해물",
+      스시: "회/해물",
+      라멘: "일식",
+      돈부리: "일식",
+      우동: "일식",
+
+      // 양식
+      양식: "양식",
+      이탈리안: "양식",
+      파스타: "양식",
+      스테이크: "양식",
+
+      // 치킨
+      치킨: "치킨",
+      닭: "치킨",
+      닭강정: "치킨",
+
+      // 피자
+      피자: "피자",
+
+      // 분식
+      분식: "분식",
+      떡볶이: "분식",
+      김밥: "분식",
+
+      // 버거
+      햄버거: "버거",
+      버거: "버거",
+
+      // 카페/디저트
+      카페: "커피/차",
+      커피: "커피/차",
+      차: "커피/차",
+      디저트: "디저트",
+      베이커리: "디저트",
+      아이스크림: "디저트",
+
+      // 기타
+      샐러드: "샐러드",
+      도시락: "도시락",
+      죽: "죽",
+      회: "회/해물",
+      해물: "회/해물",
+      횟집: "회/해물",
+      아시아: "아시안",
+      태국: "아시안",
+      베트남: "아시안",
+      멕시칸: "멕시칸",
+      타코: "멕시칸",
+    };
+
+    // 매핑 테이블에서 검색
+    for (const [keyword, ourCategory] of Object.entries(categoryMap)) {
+      if (lowerCategory.includes(keyword)) {
+        return ourCategory;
+      }
+    }
+
+    // 매칭 실패
+    return undefined;
   }
 
   /**
@@ -1312,38 +2145,38 @@ ${statsLines}
 
     // 한글 요일 매핑
     const koreanDayMap: { [key: string]: string } = {
-      "일요일": "Sunday",
-      "월요일": "Monday",
-      "화요일": "Tuesday",
-      "수요일": "Wednesday",
-      "목요일": "Thursday",
-      "금요일": "Friday",
-      "토요일": "Saturday",
-      "일": "Sunday",
-      "월": "Monday",
-      "화": "Tuesday",
-      "수": "Wednesday",
-      "목": "Thursday",
-      "금": "Friday",
-      "토": "Saturday"
+      일요일: "Sunday",
+      월요일: "Monday",
+      화요일: "Tuesday",
+      수요일: "Wednesday",
+      목요일: "Thursday",
+      금요일: "Friday",
+      토요일: "Saturday",
+      일: "Sunday",
+      월: "Monday",
+      화: "Tuesday",
+      수: "Wednesday",
+      목: "Thursday",
+      금: "Friday",
+      토: "Saturday",
     };
 
     // 영어 요일 매핑 (소문자)
     const englishDayMap: { [key: string]: string } = {
-      "sunday": "Sunday",
-      "monday": "Monday",
-      "tuesday": "Tuesday",
-      "wednesday": "Wednesday",
-      "thursday": "Thursday",
-      "friday": "Friday",
-      "saturday": "Saturday",
-      "sun": "Sunday",
-      "mon": "Monday",
-      "tue": "Tuesday",
-      "wed": "Wednesday",
-      "thu": "Thursday",
-      "fri": "Friday",
-      "sat": "Saturday"
+      sunday: "Sunday",
+      monday: "Monday",
+      tuesday: "Tuesday",
+      wednesday: "Wednesday",
+      thursday: "Thursday",
+      friday: "Friday",
+      saturday: "Saturday",
+      sun: "Sunday",
+      mon: "Monday",
+      tue: "Tuesday",
+      wed: "Wednesday",
+      thu: "Thursday",
+      fri: "Friday",
+      sat: "Saturday",
     };
 
     // 한글 매핑 시도
@@ -1448,31 +2281,37 @@ ${statsLines}
       if (input.locationMethod === "gps" && input.coordinates) {
         locationInfo = await locationService.getLocation({
           method: "gps",
-          coordinates: input.coordinates
+          coordinates: input.coordinates,
         });
       } else if (input.locationMethod === "city" && input.cityName) {
         locationInfo = await locationService.getLocation({
           method: "city",
-          cityName: input.cityName
+          cityName: input.cityName,
         });
       } else if (input.locationMethod === "text" && input.locationText) {
         // 텍스트에서 지역 정보 추출
-        const extractedLocation = this.extractLocationFromText(input.locationText);
+        const extractedLocation = this.extractLocationFromText(
+          input.locationText,
+        );
         locationInfo = await locationService.getLocation({
           method: "city",
-          cityName: extractedLocation || input.locationText
+          cityName: extractedLocation || input.locationText,
         });
       } else {
         return {
           success: false,
           message: "위치 정보를 파악할 수 없습니다. 위치를 알려주세요.",
-          error: "위치 정보 부족"
+          error: "위치 정보 부족",
         };
       }
 
       // 2. 검색 쿼리 생성
-      const locationName = `${locationInfo.locationInfo.city}${locationInfo.locationInfo.district ? `
-  ${locationInfo.locationInfo.district}` : ""}`;
+      const locationName = `${locationInfo.locationInfo.city}${
+        locationInfo.locationInfo.district
+          ? `
+  ${locationInfo.locationInfo.district}`
+          : ""
+      }`;
       const searchQuery = input.category
         ? `${locationName} ${input.category} 맛집`
         : `${locationName} 맛집`;
@@ -1482,16 +2321,16 @@ ${statsLines}
       // 3. 맛집 검색
       const result = await RestaurantProvider.search({
         query: searchQuery,
-        display: input.limit || 10
+        display: input.limit || 10,
       });
 
       // 4. 결과 포맷팅
       const restaurants = (result.items || []).map((item: any) => ({
-        name: item.title.replace(/<[^>]*>/g, ''), // HTML 태그 제거
-        address: item.address || item.roadAddress || '주소 정보 없음',
-        phone: item.telephone || '전화번호 정보 없음',
+        name: item.title.replace(/<[^>]*>/g, ""), // HTML 태그 제거
+        address: item.address || item.roadAddress || "주소 정보 없음",
+        phone: item.telephone || "전화번호 정보 없음",
         category: item.category || input.category,
-        link: item.link
+        link: item.link,
       }));
 
       // 5. 메시지 생성
@@ -1503,11 +2342,11 @@ ${statsLines}
   ## 📍 ${locationName} 주변 맛집
 
   **검색 위치**: ${locationName}
-  **검색 결과**: 총 ${result.total || 0}개${input.category ? ` (${input.category})` : ''}
+  **검색 결과**: 총 ${result.total || 0}개${input.category ? ` (${input.category})` : ""}
 
   ### 추천 맛집 Top ${Math.min(restaurants.length, 10)}
 
-  ${restaurants.slice(0, 10).map(formatRestaurant).join('\n\n')}
+  ${restaurants.slice(0, 10).map(formatRestaurant).join("\n\n")}
 
   ---
 
@@ -1520,23 +2359,20 @@ ${statsLines}
         data: {
           location: {
             name: locationName,
-            coordinates: locationInfo.coordinates
+            coordinates: locationInfo.coordinates,
           },
           restaurants,
           totalCount: result.total || 0,
-          searchQuery
-        }
+          searchQuery,
+        },
       };
-
     } catch (error) {
       console.error("❌ 주변 맛집 검색 중 오류:", error);
       return {
         success: false,
         message: "맛집 검색 중 오류가 발생했습니다. 다시 시도해주세요.",
-        error: error instanceof Error ? error.message : "알 수 없는 오류"
+        error: error instanceof Error ? error.message : "알 수 없는 오류",
       };
     }
   }
-
-
 }
