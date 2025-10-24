@@ -389,8 +389,33 @@ export class IntegratedFoodAgentController {
       let actualLocation: ILatLng;
       let actualLocationName: string;
 
-      // locationName이 있으면 LocationService로 정확한 좌표로 변환 시도
+      // locationName이 있으면 먼저 애매한 지역명인지 체크
       if (request.locationName) {
+        const ambiguousLocations = this.isAmbiguousLocation(request.locationName);
+        if (ambiguousLocations) {
+          // 애매한 지역명 - 사용자에게 확인 필요
+          return {
+            success: false,
+            message: `"${request.locationName}"은(는) 여러 지역에 있어서 정확한 추천이 어려워요.\n\n다음 중 어느 지역인가요?\n${ambiguousLocations.map((loc, idx) => `${idx + 1}. ${loc}`).join("\n")}\n\n구체적인 지역명을 다시 말씀해주세요! (예: "서울 중구", "대전 중구")`,
+            data: {
+              selectedCategories: { first: "", second: "", reasons: [] },
+              restaurants: {
+                category1: { categoryName: "", searchQuery: "", restaurants: [], totalCount: 0 },
+                category2: { categoryName: "", searchQuery: "", restaurants: [], totalCount: 0 },
+              },
+              analysis: {
+                weather: "",
+                dayOfWeek: "",
+                hungerLevel: "",
+                locationInfo: "",
+                scoringDetails: "",
+              },
+            },
+            error: "AMBIGUOUS_LOCATION",
+          };
+        }
+
+        // 명확한 지역명 - LocationService로 좌표 변환 시도
         const locationService = new LocationService();
         try {
           const locationInfo = await locationService.getLocation({
@@ -430,10 +455,10 @@ export class IntegratedFoodAgentController {
           `📍 GPS 좌표 사용: (${actualLocation.lat}, ${actualLocation.lng})`,
         );
       }
-      // 둘 다 없으면 기본값 (대전)
+      // 둘 다 없으면 기본값 (서울 강남)
       else {
-        actualLocation = { lat: 36.3518, lng: 127.3005 };
-        actualLocationName = "대전";
+        actualLocation = { lat: 37.4979, lng: 127.0276 };
+        actualLocationName = "강남";
         console.log(`📍 기본 위치 사용: ${actualLocationName}`);
       }
 
@@ -564,7 +589,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
     } catch (error) {
       console.error("❌ 카테고리 추천 및 맛집 검색 중 오류 발생:", error);
 
-      const fallbackLocationName = request.locationName || "대전";
+      const fallbackLocationName = request.locationName || "강남";
 
       return {
         success: false,
@@ -881,8 +906,33 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
       let actualLocation: ILatLng;
       let actualLocationName: string;
 
-      // locationName이 있으면 LocationService로 정확한 좌표로 변환 시도
+      // locationName이 있으면 먼저 애매한 지역명인지 체크
       if (request.locationName) {
+        const ambiguousLocations = this.isAmbiguousLocation(request.locationName);
+        if (ambiguousLocations) {
+          // 애매한 지역명 - 사용자에게 확인 필요
+          const locationOptions = ambiguousLocations.join(", ");
+          return {
+            success: false,
+            message: `"${request.locationName}"은(는) 여러 지역에 있어서 정확한 추천이 어려워요.\n\n다음 중 어느 지역인가요?\n${ambiguousLocations.map((loc, idx) => `${idx + 1}. ${loc}`).join("\n")}\n\n구체적인 지역명을 다시 말씀해주세요! (예: "서울 중구", "대전 중구")`,
+            data: {
+              selectedCategories: { first: "", second: "", reasons: [] },
+              restaurants: {
+                category1: { categoryName: "", searchQuery: "", restaurants: [], totalCount: 0 },
+                category2: { categoryName: "", searchQuery: "", restaurants: [], totalCount: 0 },
+              },
+              analysis: {
+                weather: "",
+                dayOfWeek: "",
+                hungerLevel: "",
+                scoringDetails: "",
+              },
+            },
+            error: "AMBIGUOUS_LOCATION",
+          };
+        }
+
+        // 명확한 지역명 - LocationService로 좌표 변환 시도
         const locationService = new LocationService();
         try {
           const locationInfo = await locationService.getLocation({
@@ -922,10 +972,10 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
           `📍 GPS 좌표 사용: (${actualLocation.lat}, ${actualLocation.lng})`,
         );
       }
-      // 둘 다 없으면 기본값 (대전)
+      // 둘 다 없으면 기본값 (서울 강남)
       else {
-        actualLocation = { lat: 36.3518, lng: 127.3005 };
-        actualLocationName = "대전";
+        actualLocation = { lat: 37.4979, lng: 127.0276 };
+        actualLocationName = "강남";
         console.log(`📍 기본 위치 사용: ${actualLocationName}`);
       }
 
@@ -1055,7 +1105,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
     } catch (error) {
       console.error("❌ 스마트 음식 추천 중 오류 발생:", error);
 
-      const fallbackLocationName = request.locationName || "대전";
+      const fallbackLocationName = request.locationName || "강남";
 
       return {
         success: false,
@@ -1182,53 +1232,20 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
         display: 20, // 15 → 20으로 증가
       });
 
-      // 주소 기반 필터링: location이 포함된 결과만 선택
-      let filteredRestaurants = result.items || [];
+      // Naver API가 이미 검색 쿼리("강남 근처 치킨 맛집")로 지역 기반 검색을 잘 수행하므로
+      // 추가 필터링 없이 결과를 그대로 사용합니다.
+      const restaurants = result.items || [];
 
-      // location의 핵심 키워드 추출 및 더 엄격한 필터링
-      const locationInfo = this.parseLocationForFiltering(location);
+      console.log(
+        `📍 [${category}] 검색 완료: ${restaurants.length}개 결과 반환 (필터링 없음)`,
+      );
 
-      if (locationInfo.keywords.length > 0) {
-        const beforeFilterCount = filteredRestaurants.length;
-        filteredRestaurants = filteredRestaurants.filter((item: any) => {
-          const address = (
-            item.address ||
-            item.roadAddress ||
-            ""
-          ).toLowerCase();
-
-          // 시/도 정보가 있으면 먼저 확인 (더 엄격한 필터링)
-          if (locationInfo.city) {
-            if (!address.includes(locationInfo.city.toLowerCase())) {
-              return false; // 시/도가 다르면 제외
-            }
-          }
-
-          // 키워드 중 하나라도 주소에 포함되어 있어야 함
-          return locationInfo.keywords.some((keyword) =>
-            address.includes(keyword.toLowerCase()),
-          );
-        });
-
-        console.log(
-          `📍 [${category}] 주소 필터링: ${beforeFilterCount}개 → ${filteredRestaurants.length}개 (도시: ${locationInfo.city || "N/A"}, 키워드: ${locationInfo.keywords.join(", ")})`,
-        );
-      }
-
-      // 필터링 후에도 결과가 너무 적으면 경고
-      if (filteredRestaurants.length < 3) {
-        console.warn(
-          `⚠️ [${category}] 필터링 결과가 부족합니다 (${filteredRestaurants.length}개). 원본 결과 사용`,
-        );
-        filteredRestaurants = result.items || [];
-      }
-
-      // 필터링 후 상위 5개만 반환
+      // 상위 5개만 반환
       return {
         query: searchQuery,
         category: category,
-        restaurants: filteredRestaurants.slice(0, 5),
-        total: filteredRestaurants.length,
+        restaurants: restaurants.slice(0, 5),
+        total: restaurants.length,
       };
     } catch (error) {
       console.error(`${category} 맛집 검색 실패:`, error);
@@ -1292,6 +1309,41 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
     }
 
     return keywords;
+  }
+
+  /**
+   * 지역명이 전국적으로 중복되어 애매한지 판단
+   *
+   * @description
+   * 여러 시/도에 동일한 이름의 구/동이 있는 경우 애매하다고 판단합니다.
+   *
+   * @example
+   * "중구" → 애매함 (서울, 부산, 대구, 인천, 대전, 광주, 울산)
+   * "강남" → 명확함 (일반적으로 서울 강남구)
+   * "대전" → 명확함 (광역시명)
+   *
+   * @returns 애매한 경우 가능한 지역 목록, 명확한 경우 null
+   */
+  private isAmbiguousLocation(location: string): string[] | null {
+    const cleaned = location.trim().replace(/(구|동)$/, "");
+
+    // 전국에 중복되는 구/동 이름들 (시/도별)
+    const ambiguousDistricts: { [key: string]: string[] } = {
+      중: ["서울 중구", "부산 중구", "대구 중구", "인천 중구", "대전 중구", "광주 중구", "울산 중구"],
+      동: ["부산 동구", "대구 동구", "인천 동구", "광주 동구", "대전 동구", "울산 동구"],
+      서: ["부산 서구", "대구 서구", "인천 서구", "광주 서구", "대전 서구"],
+      남: ["부산 남구", "대구 남구", "인천 남구", "광주 남구", "울산 남구"],
+      북: ["부산 북구", "대구 북구", "인천 북구", "광주 북구", "대전 북구", "울산 북구"],
+    };
+
+    // 중복 지역명 체크
+    if (ambiguousDistricts[cleaned]) {
+      console.log(`⚠️ 애매한 지역명 감지: "${location}" → 가능한 지역: ${ambiguousDistricts[cleaned].join(", ")}`);
+      return ambiguousDistricts[cleaned];
+    }
+
+    // 명확한 지역명
+    return null;
   }
 
   /**

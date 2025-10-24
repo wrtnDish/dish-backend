@@ -53,7 +53,8 @@ export namespace RestaurantProvider {
           params: {
             query: input.query,
             display: input.display ?? 5,
-            sort: "comment",
+            // sort 옵션 제거: 기본값(random)을 사용하여 지역 기반 검색 정확도 향상
+            // sort: "comment"는 전국에서 리뷰 많은 순으로 정렬하여 지역 무시됨
           },
           headers: {
             "X-Naver-Client-Id": clientId,
