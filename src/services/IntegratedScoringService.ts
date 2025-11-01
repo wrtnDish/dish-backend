@@ -100,22 +100,31 @@ export class IntegratedScoringService {
       reasons.push(historyScore.reason);
     }
 
-    // 2. 날씨 기반 점수 (0-25점) - 가중치 감소
-    const weatherScore = this.calculateWeatherScore(category, weather);
-    totalScore += weatherScore.score;
-    if (weatherScore.score > 0) {
-      reasons.push(weatherScore.reason);
-    }
-
-    // 3. 배고픔 정도 기반 점수 (0-15점) - 가중치 감소
+    // 2. 배고픔 정도 기반 점수 (0-30점) - 두 번째 우선순위로 상향
     const hungerScore = this.calculateHungerScore(category, hungerLevel);
     totalScore += hungerScore.score;
     if (hungerScore.score > 0) {
       reasons.push(hungerScore.reason);
     }
 
+    // 배고픔 페널티: 배부를 때 헤비한 음식에 큰 감점
+    if (hungerLevel === 1 && this.isHeartyFood(category)) {
+      totalScore -= 25; // 큰 페널티 부여
+      reasons.push("배부른 상태에 부담스러운 음식");
+    }
+
+    // 3. 날씨 기반 점수 (0-25점) - 세 번째 우선순위
+    const weatherScore = this.calculateWeatherScore(category, weather);
+    totalScore += weatherScore.score;
+    if (weatherScore.score > 0) {
+      reasons.push(weatherScore.reason);
+    }
+
     // 4. 기본 점수 (10점) - 모든 카테고리에 공통 적용
     totalScore += 10;
+
+    // 최소 점수는 0점으로 제한
+    totalScore = Math.max(0, totalScore);
 
     const reason = reasons.length > 0 ? reasons.join(", ") : "기본 점수";
 
@@ -138,10 +147,11 @@ export class IntegratedScoringService {
     let score = 0;
     const reasons: string[] = [];
 
-    // 온도 기반 점수 (0-15점) - 가중치 감소
+    // 온도 기반 점수 (0-20점) - 찜/탕은 추운 날씨에 최대 20점
     const tempScore = this.getTemperatureScore(
       category.serveTemp,
       weather.temperature,
+      category,
     );
     score += tempScore.score;
     if (tempScore.score > 0) {
@@ -167,6 +177,7 @@ export class IntegratedScoringService {
   private getTemperatureScore(
     serveTemp: string,
     weatherTemp: string,
+    category: IFoodCategory,
   ): { score: number; reason: string } {
     if (weatherTemp === "hot") {
       // 더운 날씨: 차가운 음식 선호
@@ -178,6 +189,13 @@ export class IntegratedScoringService {
     } else if (weatherTemp === "cold") {
       // 추운 날씨: 뜨거운 음식 선호
       if (serveTemp === "hot") {
+        // 찜/탕 카테고리에 추가 가산점
+        if (category.nameKo === "찜/탕") {
+          return { score: 17, reason: "추운 날씨에 뜨끈한 국물 음식" }; // 찜/탕 특별 가산점
+        }
+        if (category.nameKo === "한식") {
+          return { score: 16, reason: "추운 날씨에 뜨끈한 국물 음식" }; // 찜/탕 특별 가산점
+        }
         return { score: 15, reason: "추운 날씨에 따뜻한 음식" }; // 25점 → 15점
       } else if (serveTemp === "warm") {
         return { score: 12, reason: "추운 날씨에 따뜻한 음식" }; // 20점 → 12점
@@ -261,18 +279,32 @@ export class IntegratedScoringService {
     if (hungerLevel === 3) {
       // 매우 배고픔: 든든한 음식 선호
       if (this.isHeartyFood(category)) {
-        return { score: 15, reason: "배고픈 상태에 든든한 음식" }; // 20점 → 15점
+        return { score: 30, reason: "배고픈 상태에 든든한 음식" }; // 가중치 대폭 상향
       }
+      if (this.isModerateFood(category)) {
+        return { score: 15, reason: "배고픈 상태에 적당한 음식" };
+      }
+      // 가벼운 음식은 점수 없음 (배고플 때 부적합)
     } else if (hungerLevel === 2) {
       // 보통: 적당한 음식 선호
       if (this.isModerateFood(category)) {
-        return { score: 12, reason: "적당한 배고픔에 맞는 음식" }; // 15점 → 12점
+        return { score: 25, reason: "적당한 배고픔에 맞는 음식" }; // 가중치 상향
+      }
+      if (this.isHeartyFood(category)) {
+        return { score: 15, reason: "든든하게 드실 수 있는 음식" };
+      }
+      if (this.isLightFood(category)) {
+        return { score: 10, reason: "가볍게 드실 수 있는 음식" };
       }
     } else if (hungerLevel === 1) {
       // 배부름: 가벼운 음식 선호
       if (this.isLightFood(category)) {
-        return { score: 15, reason: "배부른 상태에 가벼운 음식" }; // 20점 → 15점
+        return { score: 30, reason: "배부른 상태에 가벼운 음식" }; // 가중치 대폭 상향
       }
+      if (this.isModerateFood(category)) {
+        return { score: 10, reason: "가볍게 드실 수 있는 음식" };
+      }
+      // 헤비한 음식은 점수 없음 + 페널티는 calculateCategoryScore에서 적용
     }
 
     return { score: 0, reason: "" };

@@ -494,7 +494,7 @@ export class WeatherService {
       // 7. 원본 데이터 추출 및 파싱
       let rawItems: IWeatherForecastRawItem[];
       let hourlyForecasts: IHourlyWeather[];
-      
+
       try {
         rawItems = jsonData.response.body.items.item;
         const groupedData = this.groupByForecastTime(rawItems);
@@ -603,15 +603,16 @@ export class WeatherService {
     const startTime = new Date();
 
     try {
-      // 전체 예보 데이터 조회 (최소한의 데이터만)
+      // 전체 예보 데이터 조회 (기본값 60개 = 10개 카테고리 × 6시간)
+      // 기상청 초단기예보는 10개 카테고리를 제공하므로, 모든 카테고리를 받으려면 최소 60개 필요
       const fullForecast = await this.getWeatherForecast({
         location,
-        numOfRows: 10, // 최소한의 데이터만 요청
+        numOfRows: 60, // 기본값 사용 (10개 카테고리 × 6시간 = 60개)
       });
 
       // 가장 가까운 현재 시간의 데이터 추출 (첫 번째 데이터)
       const currentHour = fullForecast.hourlyForecasts[0];
-      
+
       if (!currentHour) {
         throw new Error("현재 날씨 데이터를 찾을 수 없습니다.");
       }
