@@ -297,16 +297,42 @@ export class LocationService {
 
   /**
    * 가장 가까운 구/군 찾기
+   *
+   * @description
+   * 일반 행정구역(구/군)을 우선적으로 선택합니다.
+   * 특수 지역명(대학교, 동 이름 등)보다 행정구역이 우선됩니다.
    */
   private findNearestDistrict(
-    coordinates: ILatLng, 
+    coordinates: ILatLng,
     districts: Array<{name: string; coordinates: ILatLng}>
   ): {name: string; coordinates: ILatLng} | undefined {
     if (!districts || districts.length === 0) return undefined;
-    
+
+    // 1단계: 일반 행정구역(구/군)만 필터링
+    const administrativeDistricts = districts.filter(d =>
+      d.name.endsWith('구') || d.name.endsWith('군')
+    );
+
+    // 2단계: 행정구역이 있으면 그 중에서 가장 가까운 곳 선택
+    if (administrativeDistricts.length > 0) {
+      let nearest = administrativeDistricts[0];
+      let minDistance = this.calculateDistance(coordinates, nearest.coordinates);
+
+      for (const district of administrativeDistricts) {
+        const distance = this.calculateDistance(coordinates, district.coordinates);
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = district;
+        }
+      }
+
+      return nearest;
+    }
+
+    // 3단계: 행정구역이 없으면 전체에서 가장 가까운 곳 선택
     let nearest = districts[0];
     let minDistance = this.calculateDistance(coordinates, nearest.coordinates);
-    
+
     for (const district of districts) {
       const distance = this.calculateDistance(coordinates, district.coordinates);
       if (distance < minDistance) {
@@ -314,7 +340,7 @@ export class LocationService {
         nearest = district;
       }
     }
-    
+
     return nearest;
   }
 
