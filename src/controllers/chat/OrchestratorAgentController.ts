@@ -2,6 +2,8 @@ import { FullnessLevel } from "../../api/structures/food/IFoodRecommendation";
 import { ILatLng } from "../../api/structures/weather/IWeatherForecast";
 import { IntegratedFoodAgentController } from "./IntegratedFoodAgentController";
 import { WeatherAgentController } from "./WeatherAgentController";
+import OpenAI from "openai";
+import { MyGlobal } from "../../MyGlobal";
 
 /**
  * 대화 상태 인터페이스
@@ -74,6 +76,11 @@ interface IntentAnalysis {
     foodCategory?: string;
     restaurantName?: string;
   };
+
+  /**
+   * 부정 표현 여부 (예: "아니다", "말고", "취소")
+   */
+  isNegative?: boolean;
 }
 
 /**
@@ -97,6 +104,7 @@ interface IntentAnalysis {
 export class OrchestratorAgentController {
   private readonly weatherAgent: WeatherAgentController;
   private readonly foodAgent: IntegratedFoodAgentController;
+  private readonly openai: OpenAI;
 
   /**
    * 세션별 대화 상태 저장소
@@ -107,6 +115,10 @@ export class OrchestratorAgentController {
   constructor() {
     this.weatherAgent = new WeatherAgentController();
     this.foodAgent = new IntegratedFoodAgentController();
+    this.openai = new OpenAI({
+      apiKey: MyGlobal.env.OPENROUTER_API_KEY,
+      baseURL: "https://openrouter.ai/api/v1",
+    });
   }
 
   /**
@@ -220,8 +232,8 @@ export class OrchestratorAgentController {
       }
     }
 
-    // 의도 분석
-    const intent = this.analyzeIntent(input.userMessage, state);
+    // 의도 분석 (하이브리드 방식: 패턴 매칭 + GPT)
+    const intent = await this.analyzeIntent(input.userMessage, state);
     console.log(`🎯 의도 분석: ${intent.category} (신뢰도: ${intent.confidence})`);
 
     // 상태 기반 라우팅
@@ -232,18 +244,20 @@ export class OrchestratorAgentController {
         case 'weather':
           result = await this.handleWeather(input.userMessage, intent.entities, state);
           state.lastTopic = 'weather';
+          state.currentFlow = null; // 명시적 작업이므로 플로우 초기화
           break;
 
         case 'food_recommendation':
           result = await this.handleFoodRecommendation(input.userMessage, intent.entities, state);
           state.lastTopic = 'food';
-          state.currentFlow = 'food_recommendation';
+          state.currentFlow = 'food_recommendation'; // 플로우 시작
           break;
 
         case 'statistics':
           result = await this.handleStatistics(intent.entities, state);
           state.lastTopic = 'statistics';
           state.hasSeenStatistics = true;
+          state.currentFlow = null; // 명시적 작업이므로 플로우 초기화
           if (intent.entities?.dayOfWeek) {
             state.lastQueriedDay = intent.entities.dayOfWeek;
           }
@@ -252,7 +266,7 @@ export class OrchestratorAgentController {
         case 'restaurant_search':
           result = await this.handleRestaurantSearch(input.userMessage, intent.entities, state);
           state.lastTopic = 'restaurant';
-          state.currentFlow = 'restaurant_search';
+          state.currentFlow = null; // 맛집 검색은 단발성 작업이므로 플로우 초기화
           break;
 
         case 'food_selection':
@@ -263,10 +277,12 @@ export class OrchestratorAgentController {
         case 'system_info':
           result = await this.getSystemCapabilities();
           state.lastTopic = 'system';
+          state.currentFlow = null; // 명시적 작업이므로 플로우 초기화
           break;
 
         case 'continue_flow':
           result = await this.handleContinueFlow(input.userMessage, state);
+          // currentFlow 유지 (플로우 계속)
           break;
 
         case 'unknown':
@@ -276,6 +292,7 @@ export class OrchestratorAgentController {
             message: "죄송합니다. 무엇을 도와드릴까요? '뭐할 수 있어?'라고 물어보시면 제 기능을 설명해드릴게요!",
             suggestion: "날씨 조회, 음식 추천, 맛집 검색 등을 요청해보세요."
           };
+          state.currentFlow = null; // 명시적 작업이므로 플로우 초기화
           break;
       }
 
@@ -295,9 +312,84 @@ export class OrchestratorAgentController {
   }
 
   /**
-   * 사용자 의도 분석
+   * GPT 기반 의도 분석 (애매한 케이스 전용)
+   *
+   * @description
+   * 패턴 매칭으로 판단하기 어려운 케이스에 대해 GPT를 사용하여 정확한 의도를 분석합니다.
+   * 특히 음식 선택 기록에서 부정 표현을 구분하는 데 사용됩니다.
+   *
+   * @param message 사용자 메시지
+   * @returns 의도 분석 결과
    */
-  private analyzeIntent(message: string, state: ConversationState): IntentAnalysis {
+  private async analyzeIntentWithGPT(message: string): Promise<{
+    isNegative: boolean;
+    restaurantName?: string;
+    foodCategory?: string;
+  }> {
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert in analyzing user's food selection intent.
+
+Analyze the user message and determine:
+
+1. **isNegative**: true if the message contains negative/cancellation expressions like "아니다", "말고", "취소", "안 가", "안 먹어", otherwise false
+
+2. **restaurantName**: Extract specific restaurant brand/name if exists (e.g., "교촌치킨", "맥도날드", "신전떡볶이", "채미가", "쉐이크쉑"), otherwise null
+
+3. **foodCategory**: General food type (한식, 중식, 일식, 치킨, 피자, etc.), otherwise null
+
+IMPORTANT: Respond ONLY with valid JSON, no explanations, no markdown, no flowcharts.`,
+          },
+          {
+            role: "user",
+            content: message,
+          },
+        ],
+        response_format: { type: "json_object" }, // JSON 강제
+        temperature: 0, // 완전히 결정적으로
+        max_tokens: 150,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim();
+      if (!content) {
+        throw new Error("GPT 응답이 비어있습니다");
+      }
+
+      console.log("📝 GPT 원본 응답:", content);
+
+      // JSON 파싱
+      const result = JSON.parse(content);
+      console.log("🤖 GPT 의도 분석 결과:", result);
+
+      return {
+        isNegative: result.isNegative || false,
+        restaurantName: result.restaurantName || undefined,
+        foodCategory: result.foodCategory || undefined,
+      };
+    } catch (error) {
+      console.error("❌ GPT 의도 분석 실패:", error);
+      if (error instanceof Error) {
+        console.error("   오류 상세:", error.message);
+      }
+      // 실패 시 보수적으로 처리 (부정으로 간주하지 않음)
+      return {
+        isNegative: false,
+      };
+    }
+  }
+
+  /**
+   * 사용자 의도 분석 (하이브리드 방식)
+   *
+   * @description
+   * 명확한 케이스는 빠른 패턴 매칭으로 처리하고,
+   * 애매한 케이스(음식 선택 기록)만 GPT로 분석합니다.
+   */
+  private async analyzeIntent(message: string, state: ConversationState): Promise<IntentAnalysis> {
     const lowerMsg = message.toLowerCase().trim();
     const entities: IntentAnalysis['entities'] = {};
 
@@ -331,29 +423,41 @@ export class OrchestratorAgentController {
       lowerMsg.includes('주문할거야') || lowerMsg.includes('주문할꺼야') || lowerMsg.includes('주문할게') ||
       lowerMsg.includes('정했어') || lowerMsg.includes('정함') || lowerMsg.includes('결정했어') || lowerMsg.includes('결정함');
 
-    if (hasFoodSelectionKeyword && !lowerMsg.includes('뭐') && !lowerMsg.includes('통계')) {
-      entities.foodCategory = this.extractFoodCategory(message);
-      entities.restaurantName = this.extractRestaurantName(message);
+    // 명시적 의도 우선 체크 (음식 선택 기록 제외)
+    const hasExplicitIntent =
+      lowerMsg.includes('날씨') || lowerMsg.includes('통계') ||
+      lowerMsg.includes('맛집') || lowerMsg.includes('식당') ||
+      lowerMsg.includes('뭐할') || lowerMsg.includes('기능');
+
+    if (hasFoodSelectionKeyword && !hasExplicitIntent) {
+      // 🤖 애매한 케이스 → GPT로 정확한 분석
+      console.log("🤔 음식 선택 기록 감지 → GPT 분석 시작");
+      const gptAnalysis = await this.analyzeIntentWithGPT(message);
+
+      // 부정 표현이면 무시
+      if (gptAnalysis.isNegative) {
+        console.log("❌ 부정 표현 감지 → 음식 선택 기록 무시");
+        return {
+          category: 'unknown',
+          confidence: 0,
+          isNegative: true,
+          entities: {}
+        };
+      }
+
+      // GPT가 추출한 정보 사용
+      entities.foodCategory = gptAnalysis.foodCategory || this.extractFoodCategory(message);
+      entities.restaurantName = gptAnalysis.restaurantName || this.extractRestaurantName(message);
+
+      console.log("✅ 음식 선택 기록 확정:", entities);
       return {
         category: 'food_selection',
-        confidence: 0.95,  // 신뢰도 높임
+        confidence: 0.98,  // GPT 분석이므로 신뢰도 더 높임
         entities
       };
     }
 
-    // 2. 진행 중인 플로우가 있는지 확인
-    if (state.currentFlow === 'food_recommendation') {
-      // 배고픔 정도 숫자 또는 위치 정보가 있으면 플로우 계속
-      if (/\b[1-3]\b/.test(message) || this.containsLocationKeyword(lowerMsg)) {
-        return {
-          category: 'continue_flow',
-          confidence: 0.95,
-          entities: this.extractFoodEntities(message)
-        };
-      }
-    }
-
-    // 3. 날씨 관련
+    // 2. 날씨 관련 (명시적 의도)
     if (lowerMsg.includes('날씨') || lowerMsg.includes('기온') || lowerMsg.includes('온도') ||
         lowerMsg.includes('습도') || lowerMsg.includes('weather')) {
       entities.location = this.extractLocation(message);
@@ -364,22 +468,24 @@ export class OrchestratorAgentController {
       };
     }
 
-    // 4. 통계 조회
-    if (lowerMsg.includes('통계') || lowerMsg.includes('선택') || lowerMsg.includes('먹었') ||
-        (lowerMsg.includes('뭐') && lowerMsg.includes('먹')) && (lowerMsg.includes('요일') || lowerMsg.includes('일'))) {
+    // 3. 통계 조회 (명시적 의도)
+    if (lowerMsg.includes('통계') ||
+        (lowerMsg.includes('뭐') && lowerMsg.includes('먹') && (lowerMsg.includes('요일') || lowerMsg.includes('일')))) {
       entities.dayOfWeek = this.extractDayOfWeek(message);
       return {
         category: 'statistics',
-        confidence: 0.85,
+        confidence: 0.9,
         entities
       };
     }
 
     // 5. 맛집/음식점 검색 우선 체크 (음식 추천보다 먼저)
-    const hasRestaurantKeyword =
+    const hasExplicitRestaurantKeyword =
       lowerMsg.includes('맛집') || lowerMsg.includes('식당') || lowerMsg.includes('음식점') ||
+      lowerMsg.includes('레스토랑');
+
+    const hasFoodTypeKeyword =
       lowerMsg.includes('카페') || lowerMsg.includes('술집') || lowerMsg.includes('bar') ||
-      lowerMsg.includes('레스토랑') || lowerMsg.includes('음식') ||
       // 음식점 종류 키워드
       lowerMsg.includes('치킨') || lowerMsg.includes('피자') || lowerMsg.includes('햄버거') ||
       lowerMsg.includes('한식') || lowerMsg.includes('중식') || lowerMsg.includes('일식') ||
@@ -397,16 +503,48 @@ export class OrchestratorAgentController {
       lowerMsg.includes('주변') || lowerMsg.includes('근처') ||
       lowerMsg.includes('있어');
 
-    // 음식점 키워드 + 검색 의도가 있고, "추천"이 없으면 맛집 검색
-    if (hasRestaurantKeyword && hasSearchIntent && !lowerMsg.includes('추천')) {
-      entities.location = this.extractLocation(message);
-      entities.foodCategory = this.extractFoodCategory(message);
+    const hasLocationKeyword = this.extractLocation(message) !== undefined;
 
-      return {
-        category: 'restaurant_search',
-        confidence: 0.92,
-        entities
-      };
+    // 맛집 검색 우선순위:
+    // 1. 명시적 맛집 키워드 + 검색 의도 (예: "대전 맛집 알려줘")
+    // 2. 지역 + 음식 종류 + 검색 의도 (예: "대전 갈마동 한식 찾아줘")
+    // 단, "추천"이 있으면 음식 추천으로 분류
+    if (!lowerMsg.includes('추천')) {
+      // 케이스 1: 명시적 맛집 키워드가 있는 경우
+      if (hasExplicitRestaurantKeyword && hasSearchIntent) {
+        entities.location = this.extractLocation(message);
+        entities.foodCategory = this.extractFoodCategory(message);
+
+        return {
+          category: 'restaurant_search',
+          confidence: 0.95,
+          entities
+        };
+      }
+
+      // 케이스 2: 지역명 + 음식 종류 + 검색 의도 (예: "대전 갈마동 한식 알려줘")
+      if (hasLocationKeyword && hasFoodTypeKeyword && hasSearchIntent) {
+        entities.location = this.extractLocation(message);
+        entities.foodCategory = this.extractFoodCategory(message);
+
+        return {
+          category: 'restaurant_search',
+          confidence: 0.93,
+          entities
+        };
+      }
+
+      // 케이스 3: 음식 종류 + 검색 의도 (예: "주변 치킨집 어디야?")
+      if (hasFoodTypeKeyword && hasSearchIntent) {
+        entities.location = this.extractLocation(message);
+        entities.foodCategory = this.extractFoodCategory(message);
+
+        return {
+          category: 'restaurant_search',
+          confidence: 0.90,
+          entities
+        };
+      }
     }
 
     // 6. 음식 추천 (배고픔 기반)
@@ -437,7 +575,20 @@ export class OrchestratorAgentController {
       };
     }
 
-    // 8. 알 수 없음
+    // 8. 진행 중인 플로우 계속 (명시적 의도가 없을 때만)
+    if (state.currentFlow === 'food_recommendation') {
+      // 배고픔 정도 숫자 또는 위치 정보가 있으면 플로우 계속
+      if (/\b[1-3]\b/.test(message) || this.containsLocationKeyword(lowerMsg)) {
+        console.log("⏩ 진행 중인 플로우 계속 (food_recommendation)");
+        return {
+          category: 'continue_flow',
+          confidence: 0.95,
+          entities: this.extractFoodEntities(message)
+        };
+      }
+    }
+
+    // 9. 알 수 없음
     return {
       category: 'unknown',
       confidence: 0,
@@ -543,7 +694,13 @@ export class OrchestratorAgentController {
   }
 
   /**
-   * 맛집 검색 처리 (배고픔 정도 불필요)
+   * 맛집 검색 처리 (사용자 입력을 직접 Naver API에 전달)
+   *
+   * @description
+   * 사용자가 입력한 텍스트에서 불필요한 키워드만 제거하고
+   * 바로 Naver Local Search API로 검색합니다.
+   *
+   * 예: "대전 유성구 맛집 알려줘" → "대전 유성구 맛집"
    */
   private async handleRestaurantSearch(
     message: string,
@@ -552,7 +709,7 @@ export class OrchestratorAgentController {
   ): Promise<any> {
     console.log("🔍 맛집 검색 시작");
 
-    // 사용자 메시지에서 검색 쿼리 생성
+    // 사용자 입력에서 검색 쿼리 생성 (불필요한 키워드만 제거)
     const searchQuery = this.buildRestaurantSearchQuery(message);
     console.log(`🔍 검색 쿼리: "${searchQuery}"`);
 
@@ -569,13 +726,12 @@ export class OrchestratorAgentController {
         // 성공 응답 포맷팅
         const formattedRestaurants = result.items.map((item: any, index: number) => {
           const cleanTitle = item.title.replace(/<[^>]*>/g, ''); // HTML 태그 제거
-          const cleanCategory = item.category.replace(/<[^>]*>/g, '');
+          const cleanCategory = item.category?.replace(/<[^>]*>/g, '') || '';
 
           return `${index + 1}. **${cleanTitle}**
    📍 ${item.roadAddress || item.address}
    📞 ${item.telephone || '전화번호 없음'}
-   🏷️ ${cleanCategory}
-   ${item.link ? `🔗 [상세보기](${item.link})` : ''}`;
+   🏷️ ${cleanCategory}`;
         }).join('\n\n');
 
         const totalCount = result.total || result.items.length;
@@ -831,9 +987,18 @@ ${cap.examples.map(e => `- "${e}"`).join('\n')}
    */
   private extractLocation(message: string): string | undefined {
     const locationKeywords = [
+      // 광역시/특별시
       '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+      // 서울 구/동
       '강남', '홍대', '신촌', '명동', '강남구', '서초구', '송파구',
-      '한밭대', '충남대', '카이스트'
+      '성수', '건대', '잠실', '신림', '이태원', '압구정', '청담',
+      // 대전 구/동
+      '유성', '유성구', '동구', '중구', '서구', '대덕구',
+      '둔산', '둔산동', '노은', '노은동', '관평', '관평동',
+      '갈마동', '은행동', '신성동', '도안', '도안동',
+      '한밭대', '충남대', '카이스트', 'KAIST',
+      // 기타 주요 지역
+      '판교', '분당', '수원', '성남', '고양', '용인'
     ];
 
     for (const keyword of locationKeywords) {

@@ -1,5 +1,5 @@
 import { Agentica } from "@agentica/core";
-import { AgenticaRpcService, IAgenticaRpcListener, IAgenticaRpcService } from "@agentica/rpc";
+import { IAgenticaRpcService } from "@agentica/rpc";
 import { WebSocketRoute } from "@nestia/core";
 import { Controller } from "@nestjs/common";
 import OpenAI from "openai";
@@ -8,6 +8,7 @@ import typia from "typia";
 
 import { MyGlobal } from "../../MyGlobal";
 import { QuestionLogUtil } from "../../utils/QuestionLogUtil";
+import { CustomAgenticaRpcService, IExtendedAgenticaRpcListener } from "../../services/CustomAgenticaRpcService";
 import { OrchestratorAgentController } from "./OrchestratorAgentController";
 
 
@@ -54,7 +55,7 @@ export class MyChatController {
     acceptor: WebSocketAcceptor<
       undefined,
       IAgenticaRpcService<"chatgpt">,
-      IAgenticaRpcListener
+      IExtendedAgenticaRpcListener
     >,
   ): Promise<void> {
     // 스마트 오케스트레이터 컨트롤러 인스턴스 생성
@@ -106,8 +107,8 @@ export class MyChatController {
       return await originalConversate(message);
     };
 
-    // RPC 서비스 생성 및 연결
-    const service: AgenticaRpcService<"chatgpt"> = new AgenticaRpcService({
+    // RPC 서비스 생성 및 연결 (스트리밍 지원 버전)
+    const service = new CustomAgenticaRpcService({
       agent,
       listener: acceptor.getDriver(),
     });

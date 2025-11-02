@@ -535,7 +535,7 @@ export class IntegratedFoodAgentController {
 **점수**: ${topCategories[0].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category1Result.total}곳)
-${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
+${category1Result.restaurants.slice(0, 5).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -544,7 +544,7 @@ ${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 **점수**: ${topCategories[1].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category2Result.total}곳)
-${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
+${category2Result.restaurants.slice(0, 5).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -1052,7 +1052,7 @@ ${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 **점수**: ${topCategories[0].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category1Result.total}곳)
-${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
+${category1Result.restaurants.slice(0, 5).map(formatRestaurant).join("\n\n")}
 
 ---
 
@@ -1061,7 +1061,7 @@ ${category1Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
 **점수**: ${topCategories[1].score.toFixed(1)}점
 
 **추천 맛집** (총 ${category2Result.total}곳)
-${category2Result.restaurants.slice(0, 3).map(formatRestaurant).join("\n\n")}
+${category2Result.restaurants.slice(0, 5).map(formatRestaurant).join("\n\n")}
 
 ---
 
